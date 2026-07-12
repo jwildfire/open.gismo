@@ -11,5 +11,6 @@
 ^tasks\.md$
 ^todo\.md$
 ^docs$
+^data$
 ^[.]?air[.]toml$
 ^\.vscode$

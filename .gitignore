@@ -11,6 +11,9 @@ dist/
 site/node_modules/
 site/dist/
 
+# Leftover local pipeline/site scratch (a gh-backbone snapshot store), not package data
+data/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,5 @@
+# study-config.yaml — identity of this study.
+# Edit these to describe your study; they label the reports and the site.
+StudyID: DEMO-001
+StudyName: "Demo Study"
+StudyTitle: "open.gismo Demo Study"

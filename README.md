@@ -2,21 +2,55 @@
 
 open.gismo is an end-to-end platform for running workflows in R using the {workr} package. You can explore the prototype [here](https://gilead-biostats.github.io/open.gismo/). 
 
-# Installation
+# Local quickstart
 
-Install the package from GitHub:
-
-```r
-pak::pak("Gilead-BioStats/open.gismo")
-```
-
-Or with remotes:
+open.gismo runs entirely on your own machine — no GitHub repo, Actions, or Pages
+required. A project folder holds everything: config, workflow YAMLs, your input
+CSVs, and the generated reports.
 
 ```r
-remotes::install_github("Gilead-BioStats/open.gismo")
+# install.packages("pak")
+# dependencies = TRUE installs the pipeline packages (workr + gsm.core/mapping/kri/reporting,
+# resolved from GitHub via Remotes) and the app packages (shiny, bslib) — all Suggests.
+pak::pak("jwildfire/open.gismo", dependencies = TRUE)
+library(open.gismo)
+og_init("~/my-study", example = TRUE)   # or drop your own Raw_*.csv files in ~/my-study/input/
+og_app("~/my-study")                    # load → validate → customize → run → view
+# or headless: og_validate("~/my-study"); og_run("~/my-study", open = TRUE)
 ```
 
-# Design
+`og_init()` scaffolds the project folder — config templates, the demo-proven set
+of mapping/metric/reporting/module workflow YAMLs snapshotted from your installed
+gsm packages, and (with `example = TRUE`) sample input data drawn from
+`gsm.core::lSource`. `og_validate()` checks your input CSVs against each
+mapping workflow's spec and reports missing files, columns, or types by
+domain — the "forgiveness layer" before a run. `og_run()` executes the full
+4-phase pipeline (mappings → metrics → reporting → report modules) locally via
+{workr}, and writes both interactive gsm.kri reports and static chart exports
+into the project's `output/` folder. `og_view()` serves the folder locally and
+opens the site in a browser; `og_app()` wraps the same steps in a thin
+Shiny/bslib shell — all state still lives in the project folder as YAML/CSV, so
+the package works fully without the app.
+
+# Architecture
+
+open.gismo has two ways to run the same 4-component design (Database, Analytics
+Engine, Web Front-end, Config): a **local-first** engine that runs entirely
+against a filesystem project folder (above — the default for new projects), and
+a **GitHub deployment lane** that uses a GitHub repo as the backbone for
+storage, compute, and publishing (below — optional, for teams that want a
+shared, hosted deployment). Both lanes drive the same {workr} pipeline and
+produce the same report/payload shapes; only the `lConfig` backend (`fs_lConfig`
+vs. `gh_lConfig`) and the publishing target differ.
+
+# GitHub deployment lane
+
+Everything below is optional. It describes the second way to run the same
+4-component design — using a GitHub repo as the backbone for storage, compute,
+and publishing, so a team can share a hosted deployment instead of (or in
+addition to) running locally.
+
+## Design
 
 There are 4 main components that work together to form a fully open source analytics platform: 
 
@@ -27,7 +61,7 @@ There are 4 main components that work together to form a fully open source analy
 
 This repo provides a sample fully public and open-source implementation, largely for demo purposes, but the approach is highly modular, and a variety of technologies can be used for each component. 
 
-## Database
+### Database
 
 The database stores all data needed to run the workflows. Many possible implementations exist including: 
 
@@ -36,7 +70,7 @@ The database stores all data needed to run the workflows. Many possible implemen
 - Supabase
 - AWS S3 bucket + DuckDB
 
-## Analytics Engine
+### Analytics Engine
 
 The analytics engine loads all needed packages and executes the workflows using {workr}. Approaches include: 
 
@@ -45,7 +79,7 @@ The analytics engine loads all needed packages and executes the workflows using 
 - R Shiny App (possibly with WASM)
 - AWS framework (e.g. via lambdas)
 
-## Web Front-end
+### Web Front-end
 
 The web front-end provides a user-friendly interface to explore {workr} pipelines. Data is served from the database, pipeline specific data is read from the config. The current front-end source for open.gismo lives in [site/](site/).
 
@@ -61,11 +95,11 @@ This package uses GitHub Pages as the default front-end, but many possible imple
 - GitHub Pages (used in Prototype) - **Current and Future State**
 - React/Next.js hosted on Vercel or similar
 
-## Config
+### Config
 
 YAML workflow and config files are typically saved in folders in GitHub Repos (but could be pulled from other locations). A minimal example project for development and testing is available in [inst/examples/demo-study](inst/examples/demo-study/).
 
-# Current Build Process
+## Current Build Process
 
 The current demo build process is implemented on the `demo` branch as a simple branch-root project that can be regenerated end to end.
 

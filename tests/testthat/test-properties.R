@@ -9,6 +9,7 @@
 #  17: Project Snapshot Listing (Validates: Requirements 18.1, 18.2, 18.3, 18.8)
 #  18: Project Snapshot Data Inheritance (Validates: Requirements 18.6, 18.7)
 
+skip_if_not_installed("hedgehog")
 library(hedgehog)
 
 # ============================================================================

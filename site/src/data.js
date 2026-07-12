@@ -60,3 +60,14 @@ export async function loadLog() {
   if (!res.ok) throw new Error('No log data');
   return res.json();
 }
+
+/**
+ * Load the reports manifest written by og_run (reports.json) describing the
+ * generated interactive KRI reports and static chart exports.
+ * Returns { reports: [...], static_charts: [...] }.
+ */
+export async function loadReports() {
+  const res = await fetch('output/4_modules/reports.json');
+  if (!res.ok) throw new Error('No reports data');
+  return res.json();
+}
