@@ -44,10 +44,10 @@ Suggests:
     gsm.reporting
 Remotes:
     workr=Gilead-BioStats/workr@main,
-    gsm.core=Gilead-BioStats/gsm.core,
-    gsm.mapping=Gilead-BioStats/gsm.mapping,
-    gsm.kri=Gilead-BioStats/gsm.kri,
-    gsm.reporting=Gilead-BioStats/gsm.reporting
+    gsm.core=Gilead-BioStats/gsm.core@main,
+    gsm.mapping=Gilead-BioStats/gsm.mapping@main,
+    gsm.kri=Gilead-BioStats/gsm.kri@main,
+    gsm.reporting=Gilead-BioStats/gsm.reporting@main
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
