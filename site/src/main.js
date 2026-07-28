@@ -1,8 +1,9 @@
 import './style.css';
 import { esc } from './utils.js';
-import { loadWorkflows, loadWorkflowYaml, loadStatus, loadLog } from './data.js';
+import { loadWorkflows, loadWorkflowYaml, loadStatus, loadLog, loadReports } from './data.js';
 import { buildPipeline } from './pipeline.js';
 import { buildPackagesTable, loadPackages, loadSnapshotDate } from './packages.js';
+import { renderReports } from './reports.js';
 import { setFilter, applyFilters, resetFilters } from './filters.js';
 import { buildDetailView } from './detail.js';
 import { parseYamlMeta } from './parsers.js';
@@ -16,6 +17,7 @@ let currentLog = null;
 function showTab(name) {
   document.getElementById('workflowsTab').style.display = name === 'workflows' ? '' : 'none';
   document.getElementById('explorerTab').style.display = name === 'explorer' ? '' : 'none';
+  document.getElementById('reportsTab').style.display = name === 'reports' ? '' : 'none';
   document.getElementById('packagesTab').style.display = name === 'packages' ? '' : 'none';
   document.querySelectorAll('.tab-btn').forEach(b => {
     const active = b.dataset.tab === name;
@@ -111,14 +113,16 @@ function closeDetail() {
 async function init() {
   const wTab = document.getElementById('workflowsTab');
   const pTab = document.getElementById('packagesTab');
+  const rTab = document.getElementById('reportsTab');
 
   try {
-    // Load workflows, status, log, and packages in parallel
-    const [phases, status, log, pkgResult] = await Promise.allSettled([
+    // Load workflows, status, log, packages, and reports in parallel
+    const [phases, status, log, pkgResult, reportsResult] = await Promise.allSettled([
       loadWorkflows(),
       loadStatus(),
       loadLog(),
       Promise.all([loadPackages(), loadSnapshotDate()]),
+      loadReports(),
     ]);
 
     // Store status and log
@@ -149,6 +153,9 @@ async function init() {
     } else {
       pTab.innerHTML = '<div class="loading">No manifest.csv available</div>';
     }
+
+    // Render reports tab (empty state when reports.json is missing)
+    renderReports(rTab, reportsResult.status === 'fulfilled' ? reportsResult.value : null);
   } catch (err) {
     wTab.innerHTML = `<div class="error-msg">Could not load project: ${esc(err.message)}</div>`;
   }

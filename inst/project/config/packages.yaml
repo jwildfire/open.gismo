@@ -1,0 +1,9 @@
+# packages.yaml — informational list of the gsm packages whose workflows this
+# project snapshots. The actual versions used at run time are recorded in
+# manifest.csv by og_run(); this file just documents the source packages.
+packages:
+  - Gilead-BioStats/gsm.core
+  - Gilead-BioStats/gsm.mapping
+  - Gilead-BioStats/gsm.kri
+  - Gilead-BioStats/gsm.reporting
+  - Gilead-BioStats/workr
