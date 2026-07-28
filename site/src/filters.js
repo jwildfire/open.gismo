@@ -9,7 +9,8 @@ export function setFilter(group) {
 }
 
 export function applyFilters() {
-  const s = (document.getElementById('searchInput').value || '').toLowerCase();
+  const input = document.getElementById('searchInput');
+  const s = ((input && input.value) || '').toLowerCase();
   document.querySelectorAll('.card').forEach(c => {
     const mg = activeFilter === 'all' || c.dataset.group === activeFilter || c.dataset.group === '';
     const ms = !s || (c.dataset.search || '').toLowerCase().includes(s);
