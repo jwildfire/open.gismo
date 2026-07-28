@@ -74,7 +74,7 @@ describe('buildDetailView', () => {
 
   it('uses phase color from the yaml path prefix', () => {
     const html = buildDetailView(sampleYaml, 'workflows/1_mappings/AE.yaml');
-    // Phase 1 (Mappings) color is #60a5fa
-    expect(html).toContain('#60a5fa');
+    // Phase 1 (Mappings) color is #1d4ed8 in the espresso/paper scale
+    expect(html).toContain('#1d4ed8');
   });
 });

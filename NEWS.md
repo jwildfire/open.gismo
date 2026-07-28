@@ -1,3 +1,12 @@
+# open.gismo (development version)
+
+- The site is now a **study site**, not a workflow explorer: an espresso masthead carries the study identity from `config/study-config.yaml`, a snapshot timeline (one dot per `snapshots.json` entry — picking one re-points the whole app at that snapshot tree), and a provenance chip that expands into the snapshot's reproducibility record (input data version, package snapshot, pinned manifest SHAs).
+- Domain switcher driven by the study config domain registry: **Overview** (flag tiles, safety chart preview, changes since the previous snapshot), **Safety** (gallery of the rendered safety.viz charts, each opening the live renderer), **RBQM** (flag tiles, site × metric matrix, gsm.kri module reports), **Compare** (client-side diff of two published snapshot trees) and **Explorer** (the previous Workflows / Data / Reports / Packages views, unchanged in function).
+- Every view is deep-linkable by hash and carries the snapshot it was read from (`#/safety/hep_explorer?snapshot=ps-001`).
+- Flag semantics are derived from the reporting layer: `|flag| = 2` red, `|flag| = 1` amber, `0` on track, blank/NA not evaluated — always rendered with a text label and an accessible name, never colour alone.
+- Fixed `parseCsv()`: quoted fields containing commas (for example gsm's `"-2,-1,2,3"` thresholds) shifted every later column, which silently broke metric lookups.
+- `npm run build` now writes the bundle straight to `inst/site/index.html` instead of leaving a stray artifact in the repository root.
+
 # open.gismo 0.2.0
 
 - Added a local-first engine so open.gismo runs entirely against a filesystem project folder — no GitHub repo, Actions, or Pages required. The GitHub-backed lane (`gh_*`, Actions, snapshots) is unchanged and now documented as an optional publishing lane.

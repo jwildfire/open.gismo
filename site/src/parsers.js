@@ -57,17 +57,53 @@ export function parseWorkflow(text) {
   return { meta, spec, steps };
 }
 
+/**
+ * Split CSV text into records of fields, honouring RFC-4180 quoting: a quoted
+ * field may contain commas, newlines, and doubled quotes ("").
+ *
+ * The gsm reporting tables need this — Reporting_Metrics carries threshold
+ * vectors like "-2,-1,2,3" in a quoted field, and a naive split on commas
+ * shifts every later column (including MetricID) by three positions.
+ */
+export function splitCsvRecords(text) {
+  const records = [];
+  let field = '';
+  let record = [];
+  let inQuotes = false;
+  const src = String(text || '');
+
+  const endField = () => { record.push(field.trim()); field = ''; };
+  const endRecord = () => { endField(); records.push(record); record = []; };
+
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (src[i + 1] === '"') { field += '"'; i += 1; }
+        else inQuotes = false;
+      } else {
+        field += c;
+      }
+      continue;
+    }
+    if (c === '"') { inQuotes = true; continue; }
+    if (c === ',') { endField(); continue; }
+    if (c === '\r') continue;
+    if (c === '\n') { endRecord(); continue; }
+    field += c;
+  }
+  if (field !== '' || record.length) endRecord();
+  return records.filter((r) => !(r.length === 1 && r[0] === ''));
+}
+
 export function parseCsv(text) {
-  const trimmed = (text || '').trim();
-  if (!trimmed) return [];
-  const lines = trimmed.split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-  return lines.slice(1).map(line => {
-    const vals = line.split(',').map(v => v.replace(/"/g, '').trim());
+  const records = splitCsvRecords(text);
+  if (records.length < 2) return [];
+  const headers = records[0];
+  return records.slice(1).map((vals) => {
     const row = Object.create(null);
     headers.forEach((h, i) => {
-      row[h] = vals[i] || '';
+      row[h] = vals[i] === undefined ? '' : vals[i];
     });
     return row;
   });

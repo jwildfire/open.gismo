@@ -1,8 +1,21 @@
 import { PHASES } from './constants.js';
-import { parseYamlMeta } from './parsers.js';
+import { parseYamlMeta, parseCsv } from './parsers.js';
+import { withBase } from './context.js';
+import { parseStudyConfig, defaultStudyConfig } from './yaml.js';
+
+/**
+ * Fetch layer over the published snapshot tree.
+ *
+ * Two address spaces (see context.js):
+ *   study-level    — `_index.json`, `workflows/…`, `config/…`, `snapshots.json`;
+ *                    always read from the tree root
+ *   snapshot-level — `status.json`, `manifest.csv`, `output/…`;
+ *                    read through withBase(), so the timeline dot re-points them
+ */
 
 /**
  * Load the workflow index and parse YAML metadata for each workflow.
+ * Workflow definitions are study-level: they live at the root, not in ps-NNN/.
  * Returns { [phaseIdx]: meta[] }
  */
 export async function loadWorkflows() {
@@ -44,19 +57,19 @@ export async function loadWorkflowYaml(yamlPath) {
 }
 
 export async function loadStatus() {
-  const res = await fetch('status.json');
+  const res = await fetch(withBase('status.json'));
   if (!res.ok) throw new Error('No status data');
   return res.json();
 }
 
 export async function loadArtifact(artifactPath) {
-  const res = await fetch(`output/${artifactPath}`);
+  const res = await fetch(withBase(`output/${artifactPath}`));
   if (!res.ok) throw new Error(`Could not load artifact: ${artifactPath}`);
   return res.text();
 }
 
 export async function loadLog() {
-  const res = await fetch('log.json');
+  const res = await fetch(withBase('log.json'));
   if (!res.ok) throw new Error('No log data');
   return res.json();
 }
@@ -67,7 +80,75 @@ export async function loadLog() {
  * Returns { reports: [...], static_charts: [...] }.
  */
 export async function loadReports() {
-  const res = await fetch('output/4_modules/reports.json');
+  const res = await fetch(withBase('output/4_modules/reports.json'));
   if (!res.ok) throw new Error('No reports data');
   return res.json();
+}
+
+/** The safety domain's rendered chart manifest (3_reports phase). */
+export async function loadSafetyReports() {
+  const res = await fetch(withBase('output/3_reports/reports.json'));
+  if (!res.ok) throw new Error('No safety chart data');
+  return res.json();
+}
+
+/** The published snapshot index — study-level, always at the root. */
+export async function loadSnapshots() {
+  const res = await fetch('snapshots.json');
+  if (!res.ok) throw new Error('No snapshots.json');
+  const data = await res.json();
+  return Array.isArray(data?.snapshots) ? data.snapshots : [];
+}
+
+/**
+ * Study identity + domain registry. Falls back to the two launch domains so a
+ * missing or unreadable config never blanks the app.
+ */
+export async function loadStudyConfig() {
+  try {
+    const res = await fetch('config/study-config.yaml');
+    if (!res.ok) return defaultStudyConfig();
+    const cfg = parseStudyConfig(await res.text());
+    return cfg.domains.length ? cfg : { ...cfg, domains: defaultStudyConfig().domains };
+  } catch {
+    return defaultStudyConfig();
+  }
+}
+
+/** The package manifest for the current snapshot. */
+export async function loadManifest() {
+  const res = await fetch(withBase('manifest.csv'));
+  if (!res.ok) throw new Error('No manifest.csv');
+  return parseCsv(await res.text());
+}
+
+/** A snapshot-scoped CSV, parsed. */
+export async function loadCsv(path, snapshotId) {
+  const res = await fetch(withBase(path, snapshotId));
+  if (!res.ok) throw new Error(`Could not load ${path}`);
+  return parseCsv(await res.text());
+}
+
+/** A snapshot-scoped file as raw text — used by the byte-level snapshot diff. */
+export async function loadText(path, snapshotId) {
+  const res = await fetch(withBase(path, snapshotId));
+  if (!res.ok) throw new Error(`Could not load ${path}`);
+  return res.text();
+}
+
+/** A snapshot-scoped JSON file (status.json / reports.json for either side). */
+export async function loadJson(path, snapshotId) {
+  const res = await fetch(withBase(path, snapshotId));
+  if (!res.ok) throw new Error(`Could not load ${path}`);
+  return res.json();
+}
+
+/** The reporting layer the RBQM monitor and the overview run on. */
+export async function loadReportingLayer(snapshotId) {
+  const [results, metrics, groups] = await Promise.all([
+    loadCsv('output/3_reporting/Results/Reporting_Results.csv', snapshotId).catch(() => []),
+    loadCsv('output/3_reporting/Metrics/Reporting_Metrics.csv', snapshotId).catch(() => []),
+    loadCsv('output/3_reporting/Groups/Reporting_Groups.csv', snapshotId).catch(() => []),
+  ]);
+  return { results, metrics, groups };
 }

@@ -144,6 +144,29 @@ describe('parseCsv', () => {
     expect(rows[0].c).toBe('');
   });
 
+  it('keeps commas inside quoted fields — gsm threshold vectors', () => {
+    const csv = 'Type,ID,Threshold,MetricID\n"Analysis","kri0001","-2,-1,2,3","Analysis_kri0001"';
+    const rows = parseCsv(csv);
+    expect(rows[0].Threshold).toBe('-2,-1,2,3');
+    expect(rows[0].MetricID).toBe('Analysis_kri0001');
+  });
+
+  it('unescapes doubled quotes inside a quoted field', () => {
+    const rows = parseCsv(['a', '"say ""hi"""'].join('\n'));
+    expect(rows[0].a).toBe('say "hi"');
+  });
+
+  it('keeps newlines inside quoted fields', () => {
+    const rows = parseCsv(['a,b', '"line1', 'line2",x'].join('\n'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].a).toBe('line1\nline2');
+    expect(rows[0].b).toBe('x');
+  });
+
+  it('tolerates a trailing newline', () => {
+    expect(parseCsv('a,b\n1,2\n')).toHaveLength(1);
+  });
+
   it('handles CSV with whitespace around values', () => {
     const csv = `col1 , col2\n val1 , val2 `;
     const rows = parseCsv(csv);
