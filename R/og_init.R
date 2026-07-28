@@ -252,7 +252,7 @@ og_init <- function(project_dir, example = TRUE, overwrite = FALSE) {
     "Initialized open.gismo project at:\n  ", paths$root, "\n",
     "  ", n_workflows, " workflows snapshotted, ",
     if (isTRUE(example)) paste0(n_input, " example input files written.") else
-      "input/ is empty — add your Raw_*.csv files.", "\n",
+      "input/ is empty \u2014 add your Raw_*.csv files.", "\n",
     "Next: og_validate(\"", paths$root, "\")"
   )
   invisible(project_dir)

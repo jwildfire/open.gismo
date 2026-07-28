@@ -284,15 +284,15 @@ og_validate <- function(project_dir) {
 print.og_validation <- function(x, ...) {
   utf8 <- isTRUE(l10n_info()[["UTF-8"]])
   sym <- if (utf8) {
-    c(ok = "✔", warning = "⚠", error = "✖", missing = "✖")
+    c(ok = "\u2714", warning = "\u26a0", error = "\u2716", missing = "\u2716")
   } else {
     c(ok = "OK", warning = "! ", error = "X ", missing = "X ")
   }
-  bullet <- if (utf8) "•" else "-"
+  bullet <- if (utf8) "\u2022" else "-"
 
   study <- attr(x, "study_name")
   header <- if (!is.null(study)) {
-    paste0("open.gismo validation — ", study)
+    paste0("open.gismo validation \u2014 ", study)
   } else {
     "open.gismo validation"
   }
@@ -321,7 +321,7 @@ print.og_validation <- function(x, ...) {
         x$n_cols[[i]]
       )
       if (status == "warning" && nzchar(x$problems[[i]])) {
-        paste0(dims, "  — ", x$problems[[i]])
+        paste0(dims, "  \u2014 ", x$problems[[i]])
       } else {
         dims
       }
@@ -349,7 +349,7 @@ print.og_validation <- function(x, ...) {
     cat("\nFix these before og_run():\n")
     for (i in seq_len(nrow(need))) {
       prob <- if (nzchar(need$problems[[i]])) need$problems[[i]] else "not ready"
-      cat(sprintf("  %s %s — %s\n", bullet, need$domain[[i]], prob))
+      cat(sprintf("  %s %s \u2014 %s\n", bullet, need$domain[[i]], prob))
     }
   } else if (n_warn == 0L) {
     cat("\nAll input domains are ready. Run og_run(\"", proj, "\").\n", sep = "")
