@@ -49,6 +49,16 @@
 #' @param open Logical. Open the project site (`index.html`) — or, if the
 #'   site page is absent, the first rendered KRI report — in the browser when
 #'   the run finishes? Default `FALSE`.
+#' @param snapshot_date Date or `"YYYY-MM-DD"` string. The date this snapshot
+#'   describes. Default `NULL` derives it from the data cut — the newest date
+#'   found in the project's raw input — so re-running an old cut reproduces its
+#'   snapshot rather than stamping it with today.
+#' @param history Logical. Read prior runs' results from `history/` as the
+#'   longitudinal input to the reporting phase, and archive this run's results
+#'   there afterwards? Default `TRUE`. This is what makes `Numerator_Change`,
+#'   `Score_Change` and the other change columns appear in `Reporting_Results`;
+#'   with no prior snapshot on disk the reporting phase behaves exactly as it
+#'   did before.
 #'
 #' @return Invisibly, a list with:
 #'   * `project_dir` — normalized project root.
@@ -74,7 +84,9 @@ og_run <- function(
   project_dir,
   steps = c("mappings", "metrics", "reporting", "reports"),
   quiet = FALSE,
-  open = FALSE
+  open = FALSE,
+  snapshot_date = NULL,
+  history = TRUE
 ) {
   paths <- og_project_paths(project_dir)
   .og_check_run_preconditions(paths, steps)
@@ -100,6 +112,8 @@ og_run <- function(
   t0 <- Sys.time()
   lRaw <- .og_load_input(paths, quiet = quiet)
   counts[["input_domains"]] <- length(lRaw)
+  dSnapshotDate <- .og_snapshot_date(lRaw, snapshot_date)
+  say(sprintf("  ... snapshot date %s", format(dSnapshotDate)))
   tick("input", t0)
 
   mapped <- NULL
@@ -148,23 +162,39 @@ og_run <- function(
   }
 
   # --- Phase 3: reporting ---
+  longitudinal <- NULL
   if ("reporting" %in% steps) {
     say("Phase 3/4: reporting ...")
     t0 <- Sys.time()
     reporting_wf <- workr::MakeWorkflowList(
       strPath = file.path(paths$workflows, "3_reporting")
     )
+    # Prior snapshots, oldest first. gsm.reporting::CalculateChange lags within
+    # each group by row order, so the order this arrives in is the order the
+    # changes are computed against.
+    prior <- if (isTRUE(history)) .og_load_history(paths) else NULL
+    if (!is.null(prior)) {
+      say(sprintf(
+        "  ... %d prior snapshot(s) in history/: %s",
+        length(unique(prior$SnapshotDate)),
+        paste(sort(unique(prior$SnapshotDate)), collapse = ", ")
+      ))
+    }
     reporting <- run_phase(
       workr::RunWorkflows(reporting_wf, c(mapped, list(
         lAnalyzed = analyzed,
         lWorkflows = metrics_wf,
-        dSnapshotDate = Sys.Date(),
-        Reporting_Results_Longitudinal = NULL
+        dSnapshotDate = dSnapshotDate,
+        Reporting_Results_Longitudinal = prior
       )))
     )
     .og_clean_phase_dir(paths, "3_reporting")
     .og_save_phase_outputs(reporting, "3_reporting", paths, prefix = "Reporting_")
     counts[["reporting"]] <- length(reporting)
+    if (isTRUE(history)) {
+      .og_archive_results(reporting$Reporting_Results, paths)
+      longitudinal <- .og_load_history(paths)
+    }
     tick("reporting", t0)
   }
 
@@ -179,7 +209,15 @@ og_run <- function(
     # run the phase from the project root so they land inside the project.
     old_wd <- setwd(paths$root)
     on.exit(setwd(old_wd), add = TRUE)
-    lReports <- run_phase(workr::RunWorkflows(module_wf, reporting))
+    # Report modules read the reporting layer; some (gsm.qtl's QTL report) also
+    # want the mapped domains behind a metric and the longitudinal results. The
+    # names never collide — Mapped_* / Reporting_* — so the whole set is passed
+    # and each module's `spec` selects what it needs.
+    lReports <- run_phase(workr::RunWorkflows(module_wf, c(
+      mapped,
+      reporting,
+      list(Reporting_Results_Longitudinal = longitudinal)
+    )))
     setwd(old_wd)
     # Clean only AFTER RunWorkflows succeeds (mirroring phases 1-3), so a failed
     # rerun keeps the previous run's reports/reports.json instead of wiping them
@@ -382,6 +420,146 @@ og_run <- function(
 }
 
 # ---------------------------------------------------------------------------
+# Snapshot date + longitudinal history
+# ---------------------------------------------------------------------------
+
+#' Columns whose *name* says they hold a date
+#'
+#' The raw layer is read as character, so any column could parse as a date by
+#' accident (a free-text field with `9999-99-99` in it, an identifier that looks
+#' numeric). Restricting the scan to date-named columns keeps the snapshot date
+#' derived from something the study actually asserts, and keeps the scan cheap
+#' on tens of thousands of rows.
+#' @keywords internal
+.OG_DATE_COL_PATTERN <- "(^|_)(dt|dts|date|dtc)$|date"
+
+#' The date a snapshot describes, derived from the data cut
+#'
+#' Takes the newest parseable `YYYY-MM-DD` value across every date-named column
+#' of the raw input. That is the point in study time the cut represents, which
+#' is what a reader comparing two snapshots is actually comparing — the wall
+#' clock at the moment the pipeline happened to run says nothing about the data
+#' and makes two cuts of the same study share a date.
+#'
+#' Falls back to `Sys.Date()` when the input carries no usable date at all.
+#'
+#' @param lRaw Named list of raw input data.frames.
+#' @param override Optional Date or `"YYYY-MM-DD"` string to use instead.
+#' @keywords internal
+.og_snapshot_date <- function(lRaw, override = NULL) {
+  if (!is.null(override)) {
+    # as.Date() errors rather than returning NA on an unrecognisable string, so
+    # the failure is caught and re-raised with the argument name in it.
+    parsed <- tryCatch(
+      suppressWarnings(as.Date(override)),
+      error = function(e) as.Date(NA)
+    )
+    if (length(parsed) != 1L || is.na(parsed)) {
+      stop(
+        "`snapshot_date` must be a single date or \"YYYY-MM-DD\" string; got: ",
+        paste(format(override), collapse = ", "),
+        call. = FALSE
+      )
+    }
+    return(parsed)
+  }
+
+  latest <- NULL
+  for (df in lRaw) {
+    if (!is.data.frame(df) || nrow(df) == 0L) next
+    cols <- grep(.OG_DATE_COL_PATTERN, tolower(names(df)), value = TRUE)
+    for (nm in names(df)[tolower(names(df)) %in% cols]) {
+      values <- df[[nm]]
+      if (inherits(values, "Date")) {
+        candidates <- values
+      } else {
+        values <- as.character(values)
+        # Anchor on the ISO shape before parsing: as.Date() accepts partial
+        # matches and would read "2012-03-29 was the visit" as a date.
+        values <- values[grepl("^\\d{4}-\\d{2}-\\d{2}", values)]
+        if (!length(values)) next
+        candidates <- suppressWarnings(as.Date(substr(values, 1L, 10L)))
+      }
+      candidates <- candidates[!is.na(candidates)]
+      if (!length(candidates)) next
+      m <- max(candidates)
+      if (is.null(latest) || m > latest) latest <- m
+    }
+  }
+  if (is.null(latest)) Sys.Date() else latest
+}
+
+#' The reporting-results contract columns, in order
+#'
+#' What `Reporting_Results` carries before any change columns are added — the
+#' shape `gsm.reporting::CalculateChange()` requires of its longitudinal input.
+#' @keywords internal
+.OG_RESULTS_COLUMNS <- c(
+  "GroupID", "GroupLevel", "Numerator", "Denominator", "Metric", "Score",
+  "Flag", "MetricID", "SnapshotDate", "StudyID"
+)
+
+#' Read prior runs' results from `history/`, oldest snapshot first
+#'
+#' Returns `NULL` when the project has no history, which is what the reporting
+#' phase received unconditionally before: the first run of a study still
+#' produces a snapshot, it just has nothing to compare against.
+#' @keywords internal
+.og_load_history <- function(paths) {
+  dir <- paths$history
+  if (is.null(dir) || !dir.exists(dir)) return(NULL)
+  files <- list.files(dir, pattern = "\\.csv$", full.names = TRUE)
+  if (!length(files)) return(NULL)
+  frames <- lapply(files, function(f) {
+    df <- tryCatch(
+      utils::read.csv(f, stringsAsFactors = FALSE, colClasses = c(SnapshotDate = "character")),
+      error = function(e) NULL
+    )
+    if (!is.data.frame(df) || nrow(df) == 0L) return(NULL)
+    if (!all(.OG_RESULTS_COLUMNS %in% names(df))) return(NULL)
+    df[, .OG_RESULTS_COLUMNS, drop = FALSE]
+  })
+  frames <- Filter(Negate(is.null), frames)
+  if (!length(frames)) return(NULL)
+  out <- do.call(rbind, frames)
+  # A Date, matching what gsm.reporting::BindResults() puts on the current
+  # snapshot: dplyr::bind_rows() refuses to combine a character column with a
+  # Date one, and the two frames are bound inside CalculateChange().
+  out$SnapshotDate <- as.Date(out$SnapshotDate)
+  out <- out[!is.na(out$SnapshotDate), , drop = FALSE]
+  if (nrow(out) == 0L) return(NULL)
+  # Oldest first: CalculateChange() lags within each group by row order rather
+  # than by date, so the caller owns the ordering.
+  out[order(out$SnapshotDate), , drop = FALSE]
+}
+
+#' Archive this run's results as one file per snapshot date
+#'
+#' History accumulates across runs of the same project, so a study that is run
+#' cut by cut ends up with a longitudinal series without the pipeline needing to
+#' know anything about where snapshots are published. Re-running the same cut
+#' overwrites that cut's file rather than adding a duplicate.
+#' @keywords internal
+.og_archive_results <- function(dfResults, paths) {
+  if (!is.data.frame(dfResults) || nrow(dfResults) == 0L) return(invisible(NULL))
+  if (!all(.OG_RESULTS_COLUMNS %in% names(dfResults))) return(invisible(NULL))
+  # Only the contract columns: change columns are derived from the comparison
+  # this file will be one side of, and feeding them back would compound them.
+  df <- dfResults[, .OG_RESULTS_COLUMNS, drop = FALSE]
+  dates <- unique(as.character(df$SnapshotDate))
+  dir.create(paths$history, showWarnings = FALSE, recursive = TRUE)
+  for (d in dates) {
+    if (is.na(d) || !nzchar(d)) next
+    utils::write.csv(
+      df[as.character(df$SnapshotDate) == d, , drop = FALSE],
+      file.path(paths$history, paste0("Reporting_Results_", d, ".csv")),
+      row.names = FALSE
+    )
+  }
+  invisible(paths$history)
+}
+
+# ---------------------------------------------------------------------------
 # The GroupID standardization seam (a real workflow step)
 # ---------------------------------------------------------------------------
 
@@ -490,21 +668,48 @@ og_run <- function(
   invisible(NULL)
 }
 
-#' Move rendered kri_report_*.html files into output/4_modules/{module}/
+#' Collect rendered module HTML into output/4_modules/{module}/
 #'
-#' Report modules render into the working directory (the project root during
-#' the reports phase). This mirrors the demo's move logic: filenames
-#' containing `_Site_` go to `report_kri_site/`, all others to
-#' `report_kri_country/`.
+#' Report modules do not agree on where they write. gsm.kri's KRI reports render
+#' `kri_report_*.html` into the working directory (the project root during the
+#' reports phase); gsm.qtl's QTL report renders into `outputs/{SnapshotDate}/`.
+#' Both are swept here into the one layout the site reads, and the scratch
+#' directory is removed so a rerun cannot serve a stale copy.
+#'
+#' A file is filed under the module whose id its name matches; the KRI reports
+#' keep the demo's `_Site_` / everything-else rule, since their filenames carry
+#' the group level rather than the module id.
 #' @keywords internal
 .og_move_report_html <- function(paths) {
-  files <- list.files(paths$root, pattern = "^kri_report.*\\.html$")
+  module_ids <- .og_module_ids(paths$root)
+  scratch <- file.path(paths$root, "outputs")
+
+  files <- c(
+    list.files(paths$root, pattern = "^kri_report.*\\.html$", full.names = TRUE),
+    if (dir.exists(scratch)) {
+      list.files(scratch, pattern = "\\.html$", recursive = TRUE, full.names = TRUE)
+    } else {
+      character(0)
+    }
+  )
+
   for (f in files) {
-    level <- if (grepl("_Site_", f)) "report_kri_site" else "report_kri_country"
-    out_dir <- file.path(paths$output, "4_modules", level)
+    base <- basename(f)
+    module <- if (grepl("^kri_report", base)) {
+      if (grepl("_Site_", base)) "report_kri_site" else "report_kri_country"
+    } else {
+      # Longest match wins, so `report_kri_site` is not shadowed by `report`.
+      hits <- module_ids[vapply(
+        module_ids, function(id) grepl(id, base, fixed = TRUE), logical(1)
+      )]
+      if (length(hits)) hits[which.max(nchar(hits))] else tools::file_path_sans_ext(base)
+    }
+    out_dir <- file.path(paths$output, "4_modules", module)
     dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
-    file.rename(file.path(paths$root, f), file.path(out_dir, f))
+    file.rename(f, file.path(out_dir, base))
   }
+
+  if (dir.exists(scratch)) unlink(scratch, recursive = TRUE)
   length(files)
 }
 

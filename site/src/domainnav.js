@@ -1,5 +1,5 @@
 /**
- * Data Explorer secondary navigation.
+ * Config secondary navigation.
  *
  * The primary axis moved to the left sidebar (sidebar.js); what stays here is
  * the Explorer's own sub-navigation — the original pipeline-facing Workflows /
@@ -16,9 +16,9 @@ const EXPLORER_LABELS = {
   packages: 'Packages',
 };
 
-/** Data Explorer secondary navigation. */
+/** Config secondary navigation. */
 export function buildExplorerNav(activeTab) {
-  let h = '<div class="subnav" role="tablist" aria-label="Data Explorer views">';
+  let h = '<div class="subnav" role="tablist" aria-label="Config views">';
   for (const key of EXPLORER_TABS) {
     const active = key === activeTab;
     h += `<a class="subnav-tab${active ? ' is-active' : ''}" role="tab" href="${esc(buildHash('explorer', [key]))}"`

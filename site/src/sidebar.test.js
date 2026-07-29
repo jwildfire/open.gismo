@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   sidebarItems, buildSidebar, wireSidebar, applyCollapsed, railMark,
   markActive, sidebarSignature, readCollapsed, writeCollapsed, SIDEBAR_STORAGE_KEY,
+  readExpanded, writeExpanded,
 } from './sidebar.js';
 
 const DOMAINS = [
@@ -32,9 +33,9 @@ function mount(html, collapsed = false) {
 beforeEach(() => { document.body.innerHTML = ''; });
 
 describe('sidebarItems', () => {
-  it('is exactly Study Overview, RBQM, Safety, Data Explorer', () => {
+  it('is Study Overview, the registry domains, then Config at the bottom', () => {
     expect(sidebarItems(DOMAINS).map((i) => i.label))
-      .toEqual(['Study Overview', 'RBQM', 'Safety', 'Data Explorer']);
+      .toEqual(['Study Overview', 'RBQM', 'Safety', 'Config']);
   });
 
   it('orders RBQM before Safety whatever order the registry lists them in', () => {
@@ -58,7 +59,7 @@ describe('railMark', () => {
     expect(railMark('overview')).toBe('OV');
     expect(railMark('rbqm')).toBe('RB');
     expect(railMark('safety')).toBe('SA');
-    expect(railMark('explorer')).toBe('DX');
+    expect(railMark('explorer')).toBe('CF');
   });
 
   it('derives one for an unknown section', () => {
@@ -83,7 +84,7 @@ describe('buildSidebar', () => {
     const el = mount(buildSidebar(sidebarItems(DOMAINS), 'overview', true), true);
     const links = [...el.querySelectorAll('.sidebar-link')];
     expect(links.map((a) => a.getAttribute('aria-label')))
-      .toEqual(['Study Overview', 'RBQM', 'Safety', 'Data Explorer']);
+      .toEqual(['Study Overview', 'RBQM', 'Safety', 'Config']);
     // The label stays in the DOM — the rail hides it visually, not from AT.
     expect(links[0].querySelector('.sidebar-label').textContent).toBe('Study Overview');
     expect(links[0].querySelector('.sidebar-mark').textContent).toBe('OV');
@@ -209,5 +210,123 @@ describe('wireSidebar', () => {
 
   it('is a no-op without a sidebar', () => {
     expect(wireSidebar(null)()).toBe(false);
+  });
+});
+
+/* ── nested section contents (registry-driven) ─────────────────────────────── */
+
+const CONTENTS = {
+  rbqm: [
+    { key: 'report_kri_site', label: 'Site KRI report', href: '#/rbqm/report/report_kri_site' },
+    { key: 'charts', label: 'Metric charts', href: '#/rbqm/charts' },
+  ],
+  safety: [
+    { key: 'hep_explorer', label: 'Hepatic Explorer', href: '#/safety/hep_explorer' },
+  ],
+};
+
+describe('sidebarItems with section contents', () => {
+  it('nests a domain\'s reports, charts and metrics under it', () => {
+    const items = sidebarItems(DOMAINS, CONTENTS);
+    const rbqm = items.find((i) => i.key === 'rbqm');
+    expect(rbqm.children.map((c) => c.label)).toEqual(['Site KRI report', 'Metric charts']);
+  });
+
+  it('is driven by the registry, not by a per-domain special case', () => {
+    // The same call shape serves any domain the study config declares.
+    const items = sidebarItems(DOMAINS, CONTENTS);
+    expect(items.find((i) => i.key === 'safety').children).toHaveLength(1);
+    expect(items.find((i) => i.key === 'overview').children).toBeUndefined();
+  });
+
+  it('leaves a domain with no contents unnested', () => {
+    const items = sidebarItems(DOMAINS, { rbqm: [] });
+    expect(items.find((i) => i.key === 'rbqm').children).toBeUndefined();
+    expect(items.find((i) => i.key === 'safety').children).toBeUndefined();
+  });
+});
+
+describe('buildSidebar with nested sections', () => {
+  it('gives a nested section a disclosure button wired to its list', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'rbqm'));
+    const btn = el.querySelector('.sidebar-disclosure[data-section="rbqm"]');
+    expect(btn.tagName).toBe('BUTTON');
+    const listId = btn.getAttribute('aria-controls');
+    expect(el.querySelector(`#${listId}`).tagName).toBe('UL');
+    expect(btn.getAttribute('aria-expanded')).toBe('true'); // active section opens
+  });
+
+  it('links every child to its own page', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'rbqm'));
+    const hrefs = [...el.querySelectorAll('.sidebar-sublink')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('#/rbqm/report/report_kri_site');
+    expect(hrefs).toContain('#/rbqm/charts');
+  });
+
+  it('leaves a section without children unchanged', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'rbqm'));
+    expect(el.querySelector('.sidebar-disclosure[data-section="overview"]')).toBeNull();
+  });
+
+  it('starts sections other than the active one closed', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'overview'));
+    const rbqm = el.querySelector('.sidebar-disclosure[data-section="rbqm"]');
+    expect(rbqm.getAttribute('aria-expanded')).toBe('false');
+    expect(el.querySelector('#sidebarSub-rbqm').hidden).toBe(true);
+  });
+
+  it('honours a remembered expanded set over the active-section default', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'overview', false, ['safety']));
+    expect(el.querySelector('.sidebar-disclosure[data-section="safety"]').getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelector('.sidebar-disclosure[data-section="rbqm"]').getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('marks the active child page', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'rbqm'));
+    markActive(el, 'rbqm', '#/rbqm/charts');
+    const active = el.querySelector('.sidebar-sublink[aria-current="page"]');
+    expect(active.getAttribute('href')).toBe('#/rbqm/charts');
+    // The section link keeps its own marker off when a child owns the page.
+    expect(el.querySelector('.sidebar-link[data-view="rbqm"]').hasAttribute('aria-current')).toBe(false);
+  });
+});
+
+describe('wireSidebar disclosures', () => {
+  it('toggles a section open and shut, and remembers it', () => {
+    const store = fakeStorage();
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'overview'));
+    wireSidebar(el, null, store);
+    const btn = el.querySelector('.sidebar-disclosure[data-section="rbqm"]');
+    btn.click();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelector('#sidebarSub-rbqm').hidden).toBe(false);
+    expect(readExpanded(store)).toContain('rbqm');
+    btn.click();
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    expect(readExpanded(store)).not.toContain('rbqm');
+  });
+
+  it('still toggles the rail without disturbing the open sections', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS, CONTENTS), 'rbqm'));
+    wireSidebar(el);
+    el.querySelector('#sidebarToggle').click();
+    expect(el.dataset.collapsed).toBe('true');
+    // The section stays open in the accessibility tree; the rail hides it in CSS.
+    expect(el.querySelector('.sidebar-disclosure[data-section="rbqm"]').getAttribute('aria-expanded')).toBe('true');
+  });
+});
+
+describe('expanded-section persistence', () => {
+  it('round-trips a set of section keys', () => {
+    const store = fakeStorage();
+    expect(readExpanded(store)).toEqual([]);
+    writeExpanded(['rbqm', 'safety'], store);
+    expect(readExpanded(store)).toEqual(['rbqm', 'safety']);
+  });
+
+  it('treats unusable storage as nothing remembered', () => {
+    const broken = { getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } };
+    expect(readExpanded(broken)).toEqual([]);
+    expect(writeExpanded(['rbqm'], broken)).toBe(false);
   });
 });

@@ -221,8 +221,43 @@ a:hover { text-decoration: underline; }
 .sidebar-link.is-active .sidebar-mark { color: var(--accent-bright); }
 .sidebar-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Nested section contents. The disclosure sits beside the section link rather
+   than wrapping it, so the link stays a link and the toggle stays a button. */
+.sidebar-row { display: flex; align-items: stretch; gap: 0.15rem; }
+.sidebar-row .sidebar-link { flex: 1 1 auto; min-width: 0; }
+
+.sidebar-disclosure {
+  appearance: none; cursor: pointer; font: inherit; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 1.5rem;
+  background: transparent; border: 0; border-radius: var(--radius-small);
+  color: var(--side-soft);
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-disclosure:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
+.sidebar-disclosure-mark { display: inline-block; font-size: 0.62rem; transition: transform 0.15s; }
+.sidebar-disclosure[aria-expanded='true'] .sidebar-disclosure-mark { transform: rotate(90deg); }
+
+.sidebar-sublist { list-style: none; margin: 0.1rem 0 0.3rem; padding: 0 0 0 1.55rem; }
+.sidebar-sublink {
+  display: flex; align-items: baseline; gap: 0.4rem;
+  padding: 0.32rem 0.5rem;
+  border-left: 2px solid #4a3327;
+  color: var(--side-soft);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+.sidebar-sublink:hover { color: #fff; background: rgba(255, 255, 255, 0.06); text-decoration: none; }
+.sidebar-sublink.is-active { color: #fff; border-left-color: var(--accent-bright); font-weight: 600; }
+.sidebar-sublabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-subnote { margin-left: auto; font-size: 0.66rem; color: #8d7767; flex-shrink: 0; }
+
 /* Collapsed: labels leave the page, never the accessibility tree. */
 .sidebar[data-collapsed='true'] .sidebar-list { padding: 0 0.35rem; }
+/* The rail hides the nested lists without shutting them, so expanding the rail
+   returns the reader to the sections they had open. */
+.sidebar[data-collapsed='true'] .sidebar-sublist,
+.sidebar[data-collapsed='true'] .sidebar-disclosure { display: none; }
 .sidebar[data-collapsed='true'] .sidebar-link { justify-content: center; padding: 0.6rem 0.2rem; gap: 0; }
 .sidebar[data-collapsed='true'] .sidebar-label {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
@@ -1055,3 +1090,135 @@ table { border-collapse: collapse; width: 100%; }
   .sidebar-toggle { display: none; }
   .masthead-aside { margin-left: 0; width: 100%; }
 }
+
+/* ---- 14. RBQM: risk score, funnel, acceptable ranges --------------------- */
+
+/* A fourth tile once there is a previous snapshot to have moved from. */
+.tile-movers { border-left-color: var(--accent); background: linear-gradient(180deg, #fdf1e7 0%, var(--card) 55%); }
+.tile-movers .tile-value { color: var(--accent); }
+
+/* The ranked table and the funnel sit side by side: the ranking a monitor asks
+   for, with the uncertainty next to it. They stack below the split point, table
+   first, because the table is the thing being checked. */
+.risk-section { margin-top: 1.75rem; }
+.risk-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 68rem) {
+  .risk-split { grid-template-columns: minmax(0, 1fr); }
+}
+.subsection-title {
+  font-family: var(--serif); font-size: 1.05rem; font-weight: 400;
+  margin: 0 0 0.5rem;
+}
+
+.risk-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.risk-table th, .risk-table td {
+  text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.risk-table thead th {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--faint);
+  white-space: nowrap;
+}
+.risk-table .num-col { text-align: right; }
+.risk-table tbody tr:hover { background: var(--panel); }
+.risk-site { font-weight: 500; }
+.risk-score { white-space: nowrap; cursor: help; }
+.risk-score-value { font-size: 1.05rem; font-weight: 600; display: block; }
+.risk-score-denom { display: block; font-size: 0.66rem; color: var(--muted); }
+
+/* Dimmed, not hidden and not ranked: the site stays on the page, and stays
+   readable — this is a de-emphasis, not a disabled state. */
+.risk-row.is-low-precision { color: var(--muted); background: repeating-linear-gradient(
+    135deg, transparent, transparent 6px, rgba(163, 149, 138, 0.06) 6px, rgba(163, 149, 138, 0.06) 12px); }
+.risk-row.is-low-precision .risk-score-value { color: var(--muted); font-weight: 500; }
+
+.driver {
+  display: inline-block; font-family: var(--mono); font-size: 0.68rem;
+  padding: 0.1rem 0.35rem; border-radius: 4px; border: 1px solid transparent;
+}
+.driver-red { background: var(--bad-bg); border-color: var(--bad-rule); color: var(--bad); }
+.driver-amber { background: var(--warn-bg); border-color: var(--warn-rule); color: var(--warn); }
+.driver-more { font-size: 0.68rem; color: var(--muted); margin-left: 0.15rem; }
+
+/* Change chips. The glyph and the word carry the meaning; colour is third. */
+.chip {
+  display: inline-flex; align-items: baseline; gap: 0.25rem;
+  font-size: 0.72rem; padding: 0.12rem 0.4rem; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--panel); color: var(--muted);
+  white-space: nowrap;
+}
+.chip-glyph { font-size: 0.62rem; }
+.chip-num { font-weight: 600; }
+.chip-word { font-size: 0.68rem; }
+.chip-worse { background: var(--bad-bg); border-color: var(--bad-rule); color: var(--bad); }
+.chip-better { background: var(--good-bg); border-color: var(--good-rule); color: var(--good); }
+.chip-moved { background: var(--warn-bg); border-color: var(--warn-rule); color: var(--warn); }
+.chip-new { background: #ede9fe; border-color: #ddd6fe; color: #5b21b6; }
+
+/* Funnel plot */
+.funnel { width: 100%; height: auto; display: block; }
+.funnel-axis { stroke: var(--faint); stroke-width: 1; }
+.funnel-band { fill: none; stroke: var(--faint); stroke-width: 1; }
+.funnel-band-inner { stroke-dasharray: 3 3; }
+.funnel-band-outer { stroke-dasharray: 1 4; }
+.funnel-mean { stroke: var(--accent); stroke-width: 1.25; }
+.funnel-mean-label { fill: var(--accent); font-family: var(--mono); font-size: 0.6rem; }
+.funnel-point { fill: var(--faint); }
+.funnel-point-inner { fill: var(--warn); }
+.funnel-point-outer { fill: var(--bad); }
+.funnel-point-label { fill: var(--ink); font-family: var(--mono); font-size: 0.6rem; }
+.funnel-axis-label, .funnel-tick { fill: var(--muted); font-size: 0.62rem; }
+.funnel-tick { font-family: var(--mono); }
+
+/* Acceptable ranges — ICH E6(R3)'s three states */
+.ranges { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+.range {
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 4px solid var(--faint);
+  border-radius: var(--radius); padding: 0.85rem 1rem;
+}
+.range-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.range-name { font-size: 0.88rem; font-weight: 500; }
+.range-state { font-size: 0.7rem; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 0.25rem; }
+.range-glyph { font-size: 0.75rem; }
+.range-figure { display: flex; align-items: baseline; gap: 0.55rem; margin-top: 0.45rem; flex-wrap: wrap; }
+.range-value { font-size: 1.5rem; font-weight: 600; line-height: 1; }
+.range-fraction { font-size: 0.7rem; color: var(--muted); }
+.range-limits { font-size: 0.68rem; color: var(--muted); margin-top: 0.45rem; }
+
+.range-meter {
+  position: relative; height: 6px; margin-top: 0.55rem;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 999px; overflow: hidden;
+}
+.range-meter-fill { position: absolute; inset: 0 auto 0 0; background: var(--faint); }
+.range-meter-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: 0.45; }
+
+.range-within { border-left-color: var(--good); }
+.range-within .range-state, .range-within .range-value { color: var(--good); }
+.range-within .range-meter-fill { background: var(--good); }
+.range-trending { border-left-color: var(--warn); background: linear-gradient(180deg, var(--warn-bg) 0%, var(--card) 45%); }
+.range-trending .range-state, .range-trending .range-value { color: var(--warn); }
+.range-trending .range-meter-fill { background: var(--warn); }
+.range-breached { border-left-color: var(--bad); background: linear-gradient(180deg, var(--bad-bg) 0%, var(--card) 45%); }
+.range-breached .range-state, .range-breached .range-value { color: var(--bad); }
+.range-breached .range-meter-fill { background: var(--bad); }
+
+/* Metric definitions */
+.metric-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.metric-table th, .metric-table td {
+  text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); vertical-align: top;
+}
+.metric-table thead th {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--faint); white-space: nowrap;
+}
+.metric-table .num-col { text-align: right; }
+.metric-table tbody tr:hover { background: var(--panel); }
+.muted { color: var(--muted); }

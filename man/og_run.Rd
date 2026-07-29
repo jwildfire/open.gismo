@@ -8,7 +8,9 @@ og_run(
   project_dir,
   steps = c("mappings", "metrics", "reporting", "reports"),
   quiet = FALSE,
-  open = FALSE
+  open = FALSE,
+  snapshot_date = NULL,
+  history = TRUE
 )
 }
 \arguments{
@@ -25,6 +27,18 @@ progress messages? Default \code{FALSE}.}
 \item{open}{Logical. Open the project site (\code{index.html}) — or, if the
 site page is absent, the first rendered KRI report — in the browser when
 the run finishes? Default \code{FALSE}.}
+
+\item{snapshot_date}{Date or \code{"YYYY-MM-DD"} string. The date this snapshot
+describes. Default \code{NULL} derives it from the data cut — the newest date
+found in the project's raw input — so re-running an old cut reproduces its
+snapshot rather than stamping it with today.}
+
+\item{history}{Logical. Read prior runs' results from \verb{history/} as the
+longitudinal input to the reporting phase, and archive this run's results
+there afterwards? Default \code{TRUE}. This is what makes \code{Numerator_Change},
+\code{Score_Change} and the other change columns appear in \code{Reporting_Results};
+with no prior snapshot on disk the reporting phase behaves exactly as it
+did before.}
 }
 \value{
 Invisibly, a list with:

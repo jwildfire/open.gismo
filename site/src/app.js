@@ -2,9 +2,9 @@
  * Application shell — a published study site.
  *
  * A collapsible left sidebar is the primary axis: Study Overview, one entry per
- * domain in the study config registry (RBQM, Safety), and the Data Explorer,
- * which houses the original pipeline-facing Workflows / Data / Reports /
- * Packages views. A compact masthead above the view carries study identity, the
+ * domain in the study config registry (RBQM, Safety), and Config, which houses
+ * the pipeline-facing Workflows / Data / Reports / Packages views and sits last
+ * because how the study is wired is a different question from what it is doing. A compact masthead above the view carries study identity, the
  * snapshot timeline and the provenance chip.
  *
  * All data is fetched from the static snapshot tree; picking a timeline dot
@@ -26,13 +26,20 @@ import {
 import { buildMasthead, wireMasthead } from './masthead.js';
 import { buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
 import {
-  buildSidebar, sidebarItems, wireSidebar, readCollapsed, applyCollapsed,
+  buildSidebar, sidebarItems, wireSidebar, readCollapsed, applyCollapsed, readExpanded,
   markActive, sidebarSignature,
 } from './sidebar.js';
-import { parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot } from './router.js';
+import {
+  parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, rbqmSection, withSnapshot,
+} from './router.js';
 import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from './flags.js';
 import { chartCards, buildGallery, buildChartPage, mountChartFrame } from './gallery.js';
-import { buildRbqmView, buildModuleReportPage } from './rbqm.js';
+import {
+  buildRbqmView, buildModuleReportPage, buildChartsPage, buildMetricsPage,
+} from './rbqm.js';
+import { riskScoreRows, SCORE_NOISE } from './riskscore.js';
+import { acceptableRanges } from './ranges.js';
+import { domainContents } from './domaincontents.js';
 import { groupOverviewInputs, mountGroupOverview, canRender, availableLevels } from './kritable.js';
 import { buildOverview, overviewLoading } from './overview.js';
 import { buildPipeline } from './pipeline.js';
@@ -121,19 +128,28 @@ function renderMasthead(bundle) {
   });
 }
 
-function renderSidebar() {
-  const items = sidebarItems(state.config?.domains || []);
+function renderSidebar(bundle) {
+  const domains = state.config?.domains || [];
+  const items = sidebarItems(domains, domainContents(domains, bundle));
   const signature = sidebarSignature(items);
-  // Rebuilt only when the study config changes what the nav contains; every
-  // other navigation just moves the active marker, so focus survives it.
+  // Rebuilt only when the nav's contents change — a new snapshot can add a
+  // report module, and that changes the nested lists. Every other navigation
+  // just moves the active marker, so keyboard focus survives it.
   if (state.renderedSidebar !== signature) {
-    els.sidebar.innerHTML = buildSidebar(items, state.route.view, state.sidebarCollapsed);
+    const remembered = readExpanded();
+    els.sidebar.innerHTML = buildSidebar(
+      items,
+      state.route.view,
+      state.sidebarCollapsed,
+      remembered.length ? remembered : null,
+    );
     applyCollapsed(els.sidebar, state.sidebarCollapsed);
     wireSidebar(els.sidebar, (collapsed) => { state.sidebarCollapsed = collapsed; });
     state.renderedSidebar = signature;
-  } else {
-    markActive(els.sidebar, state.route.view);
   }
+  // The nested page owns the marker when the route is one; `hash` is the route
+  // as the router would have built it, which is what the links carry.
+  markActive(els.sidebar, state.route.view, state.route.hash);
   decorateLinks(els.sidebar);
 }
 
@@ -200,7 +216,47 @@ function renderSafety(bundle) {
   if (card) mountChartFrame(els.view, card, (p) => withBase(p));
 }
 
+/**
+ * The risk-score rows and the acceptable ranges, derived once per snapshot and
+ * kept on the bundle: the RBQM page re-renders on every group-level click, and
+ * neither depends on the level being shown.
+ */
+function rbqmModel(bundle) {
+  if (!bundle._rbqm) {
+    const rows = riskScoreRows(bundle.reporting, { groupLevel: 'Site' });
+    bundle._rbqm = {
+      rows,
+      ranges: acceptableRanges(bundle.reporting),
+      // A "mover" is a site whose score changed by more than the noise floor —
+      // the same threshold the chips use, so the tile and the rows agree.
+      movers: rows.filter((r) => r.change !== null && Math.abs(r.change) > SCORE_NOISE).length,
+      hasHistory: rows.some((r) => r.change !== null),
+      previousDate: rows.find((r) => r.previousDate)?.previousDate || null,
+    };
+  }
+  return bundle._rbqm;
+}
+
+/** The snapshot id of the snapshot before the one being read, if any. */
+function previousSnapshotId() {
+  const snaps = getSnapshots();
+  const idx = snaps.findIndex((s) => s.snapshot_id === getCurrentSnapshotId());
+  return idx > 0 ? snaps[idx - 1].snapshot_id : null;
+}
+
 function renderRbqm(bundle) {
+  const section = rbqmSection(state.route);
+  if (section === 'charts') {
+    els.view.innerHTML = buildChartsPage(staticPaths(bundle.modules), domain('rbqm'));
+    decorateLinks(els.view);
+    return;
+  }
+  if (section === 'metrics') {
+    els.view.innerHTML = buildMetricsPage(bundle.reporting?.metrics || [], domain('rbqm'));
+    decorateLinks(els.view);
+    return;
+  }
+
   const reportId = rbqmReportId(state.route);
   if (reportId) {
     const report = (bundle.modules?.reports || []).find((r) => r.id === reportId) || null;
@@ -225,6 +281,11 @@ function renderRbqm(bundle) {
   // page decides up front whether it is showing a table or an empty state.
   const renderable = canRender(inputs);
 
+  const model = rbqmModel(bundle);
+  const previousLabel = model.previousDate
+    ? (previousSnapshotId() || model.previousDate)
+    : null;
+
   const paint = (error) => {
     els.view.innerHTML = buildRbqmView({
       summary: bundle.summary,
@@ -236,6 +297,14 @@ function renderRbqm(bundle) {
       metricCount: inputs.metricMetadata.length,
       empty: !renderable,
       error,
+      riskRows: model.rows,
+      ranges: model.ranges,
+      hasHistory: model.hasHistory,
+      previousLabel,
+      movers: model.hasHistory ? model.movers : undefined,
+      moversNote: model.hasHistory
+        ? `risk score moved by more than ${SCORE_NOISE.toFixed(1)}`
+        : undefined,
     });
     decorateLinks(els.view);
   };
@@ -273,8 +342,8 @@ function staticPaths(modules) {
 async function renderExplorer(bundle) {
   const tab = explorerTab(state.route);
   let h = '<section class="domain-view"><div class="domain-head"><div>';
-  h += '<h2 class="domain-title">Data Explorer</h2>';
-  h += '<p class="domain-sub">The pipeline behind the domains: workflow definitions, output data, generated reports and the pinned environment.</p>';
+  h += '<h2 class="domain-title">Config</h2>';
+  h += '<p class="domain-sub">How this study is wired: workflow definitions, output data, generated reports and the pinned environment.</p>';
   h += '</div></div>';
   h += buildExplorerNav(tab);
   if (tab === 'workflows') h += buildExplorerToolbar(state.compactMode);
@@ -445,7 +514,7 @@ async function render() {
     renderMasthead(bundle);
     state.renderedSnapshot = getCurrentSnapshotId();
   }
-  renderSidebar();
+  renderSidebar(bundle);
   document.title = `${state.config?.study?.label || 'open.gismo'} — ${titleFor(state.route)}`;
 
   const view = state.route.view;
@@ -459,7 +528,7 @@ function titleFor(route) {
   const d = domain(route.view);
   if (d) return d.label;
   if (route.view === 'overview') return 'Study Overview';
-  if (route.view === 'explorer') return 'Data Explorer';
+  if (route.view === 'explorer') return 'Config';
   return route.view.charAt(0).toUpperCase() + route.view.slice(1);
 }
 
