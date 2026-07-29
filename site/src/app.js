@@ -1,10 +1,11 @@
 /**
- * Application shell — Direction C: a published study site.
+ * Application shell — a published study site.
  *
- * The masthead (study identity + snapshot timeline + provenance chip) is global
- * chrome; under it a domain switcher selects Overview, one view per domain in
- * the study config registry, Compare, or Explorer (which houses the original
- * pipeline-facing Workflows / Data / Reports / Packages views).
+ * A collapsible left sidebar is the primary axis: Study Overview, one entry per
+ * domain in the study config registry (RBQM, Safety), and the Data Explorer,
+ * which houses the original pipeline-facing Workflows / Data / Reports /
+ * Packages views. A compact masthead above the view carries study identity, the
+ * snapshot timeline and the provenance chip.
  *
  * All data is fetched from the static snapshot tree; picking a timeline dot
  * re-points every snapshot-scoped fetch at that tree (context.js) and re-renders
@@ -12,28 +13,27 @@
  */
 
 import './style.css';
+import './vendor/gsm.viz/group-overview.css';
 import { esc } from './utils.js';
 import {
   loadWorkflows, loadWorkflowYaml, loadSnapshots, loadStudyConfig,
-  loadReportingLayer, loadJson, loadCsv, loadText,
+  loadReportingLayer, loadJson, loadCsv,
 } from './data.js';
 import {
   setSnapshots, getSnapshots, getCurrentSnapshot, getCurrentSnapshotId, setCurrentSnapshot,
-  getSnapshot, withBase, isLatest,
+  withBase, isLatest,
 } from './context.js';
 import { buildMasthead, wireMasthead } from './masthead.js';
-import { buildDomainNav, buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
-import { parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot } from './router.js';
+import { buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
 import {
-  summarizeFlags, buildMatrix, metricIndex, groupIndex, flagDeltas, studyFacts,
-} from './flags.js';
+  buildSidebar, sidebarItems, wireSidebar, readCollapsed, applyCollapsed,
+} from './sidebar.js';
+import { parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot } from './router.js';
+import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from './flags.js';
 import { chartCards, buildGallery, buildChartPage, mountChartFrame } from './gallery.js';
 import { buildRbqmView, buildModuleReportPage } from './rbqm.js';
+import { groupOverviewInputs, mountGroupOverview, availableLevels } from './kritable.js';
 import { buildOverview, overviewLoading } from './overview.js';
-import { buildCompareView } from './compareview.js';
-import {
-  artifactInventory, diffInventory, compareContent, summarizeCompare, buildCompareRows, changedRows,
-} from './compare.js';
 import { buildPipeline } from './pipeline.js';
 import { buildPackagesTable } from './packages.js';
 import { renderReports } from './reports.js';
@@ -47,10 +47,10 @@ const state = {
   facts: {},
   route: null,
   compactMode: false,
-  flaggedOnly: true,
+  sidebarCollapsed: false,
+  groupLevel: 'Site',
   workflows: null,
   bundles: new Map(),   // snapshotId -> loaded snapshot data
-  compare: { fromId: null, toId: null, result: null, loading: false, error: null },
   renderedSnapshot: null,
 };
 
@@ -61,7 +61,8 @@ const els = {};
 /**
  * Everything the app reads from one snapshot tree, loaded once and cached.
  * Every fetch names its snapshot explicitly, so a bundle can be loaded for any
- * snapshot without disturbing the current context (the compare view needs two).
+ * snapshot without disturbing the current context (the overview's change list
+ * needs the previous one).
  */
 async function snapshotBundle(id) {
   const key = id || '__root__';
@@ -87,6 +88,7 @@ async function snapshotBundle(id) {
       summary: summarizeFlags(reporting.results, 'Site'),
       facts: studyFacts(reporting.groups),
       cards: chartCards(safety),
+      levels: availableLevels(reporting),
     };
   })();
   state.bundles.set(key, promise);
@@ -117,9 +119,15 @@ function renderMasthead(bundle) {
   });
 }
 
-function renderNav() {
-  els.nav.innerHTML = buildDomainNav(state.config?.domains || [], state.route.view);
-  decorateLinks(els.nav);
+function renderSidebar() {
+  els.sidebar.innerHTML = buildSidebar(
+    sidebarItems(state.config?.domains || []),
+    state.route.view,
+    state.sidebarCollapsed,
+  );
+  applyCollapsed(els.sidebar, state.sidebarCollapsed);
+  wireSidebar(els.sidebar, (collapsed) => { state.sidebarCollapsed = collapsed; });
+  decorateLinks(els.sidebar);
 }
 
 /**
@@ -165,6 +173,9 @@ async function renderOverview(bundle) {
     prevSnapshot,
     currentSnapshot: getCurrentSnapshot(),
     domains: state.config?.domains || [],
+    pipelineStatus: bundle.status?.pipeline_status || 'unknown',
+    packageCount: bundle.manifest?.length || 0,
+    snapshotCount: snaps.length,
   });
   decorateLinks(els.view);
 }
@@ -200,93 +211,58 @@ function renderRbqm(bundle) {
     return;
   }
 
-  const matrix = buildMatrix(bundle.reporting.results, {
-    groupLevel: 'Site',
-    flaggedOnly: state.flaggedOnly,
-  });
-  els.view.innerHTML = buildRbqmView({
-    summary: bundle.summary,
-    matrix,
-    metrics: bundle.metrics,
-    groups: bundle.groups,
-    moduleReports: bundle.modules,
-    domain: domain('rbqm'),
-    flaggedOnly: state.flaggedOnly,
-  });
-  decorateLinks(els.view);
-  const toggle = els.view.querySelector('#matrixToggle');
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      state.flaggedOnly = !state.flaggedOnly;
-      renderRbqm(bundle);
-    });
-  }
-}
+  const levels = bundle.levels?.length ? bundle.levels : ['Site'];
+  if (!levels.includes(state.groupLevel)) state.groupLevel = levels[0];
+  const inputs = groupOverviewInputs(bundle.reporting, { groupLevel: state.groupLevel });
 
-async function renderCompare(bundle) {
-  const snaps = getSnapshots();
-  if (snaps.length < 2) {
-    els.view.innerHTML = '<section class="domain-view"><div class="domain-head"><div>'
-      + '<h2 class="domain-title">Compare snapshots</h2>'
-      + '<p class="domain-sub">A client-side diff of two published snapshot trees.</p></div></div>'
-      + '<div class="empty-state"><div class="empty-title">Only one snapshot is published</div>'
-      + '<div class="empty-hint">Comparison needs a second entry in <span class="mono">snapshots.json</span>.</div></div></section>';
-    return;
-  }
-
-  const q = state.route.query;
-  const toId = q.to && getSnapshot(q.to) ? q.to : snaps[snaps.length - 1].snapshot_id;
-  const fromId = q.from && getSnapshot(q.from) ? q.from : snaps[snaps.length - 2].snapshot_id;
-  state.compare.fromId = fromId;
-  state.compare.toId = toId;
-
-  const paint = (extra) => {
-    els.view.innerHTML = buildCompareView({
-      snapshots: snaps, fromId, toId, groupLevel: 'Site', ...extra,
+  const paint = (error) => {
+    els.view.innerHTML = buildRbqmView({
+      summary: bundle.summary,
+      moduleReports: staticPaths(bundle.modules),
+      domain: domain('rbqm'),
+      groupLevel: state.groupLevel,
+      levels,
+      groupCount: inputs.groupCount,
+      metricCount: inputs.metricMetadata.length,
+      empty: !inputs.results.length,
+      error,
     });
     decorateLinks(els.view);
-    wireCompareControls();
   };
+  paint(null);
 
-  if (fromId === toId) { paint({}); return; }
-  paint({ loading: true });
+  // The widget mounts into the painted page, and remounts whenever the snapshot
+  // or the group level changes.
+  const mount = els.view.querySelector('#kriTable');
+  const res = mountGroupOverview(mount, inputs, {
+    groupClickCallback: () => {},
+    metricClickCallback: () => {},
+  });
+  if (res.error) paint(res.error.message);
 
-  try {
-    const [prev, curr] = await Promise.all([bundleFor(fromId), bundleFor(toId)]);
-    const prevInv = artifactInventory(prev.status, prev.safety);
-    const currInv = artifactInventory(curr.status, curr.safety);
-    const diff = diffInventory(prevInv, currInv);
-    const read = (path, side) => loadText(path, side === 'prev' ? fromId : toId);
-    const content = await compareContent(diff.common, read);
-    const summary = summarizeCompare(diff, content);
-    const rows = changedRows(buildCompareRows(diff, content));
-    const deltas = flagDeltas(prev.reporting.results, curr.reporting.results, 'Site');
-    paint({ summary, rows, deltas, metrics: curr.metrics, groups: curr.groups });
-  } catch (err) {
-    paint({ error: `Could not compare snapshots: ${err.message}` });
-  }
-}
-
-function wireCompareControls() {
-  const from = els.view.querySelector('#compareFrom');
-  const to = els.view.querySelector('#compareTo');
-  const go = () => {
-    window.location.hash = buildHash('compare', [], {
-      from: from.value,
-      to: to.value,
-      snapshot: state.route.query.snapshot,
+  els.view.querySelectorAll('[data-level]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.groupLevel = btn.dataset.level;
+      renderRbqm(bundle);
     });
-  };
-  if (from) from.addEventListener('change', go);
-  if (to) to.addEventListener('change', go);
+  });
 }
 
-/* ── explorer (the original pipeline views, kept working) ─────────────────── */
+/** Resolve the 4_modules payload's paths against the current snapshot. */
+function staticPaths(modules) {
+  if (!modules) return null;
+  return {
+    reports: modules.reports || [],
+    static_charts: (modules.static_charts || []).map((c) => ({ ...c, png: withBase(c.png) })),
+  };
+}
+
+/* ── data explorer (the original pipeline views, kept working) ────────────── */
 
 async function renderExplorer(bundle) {
   const tab = explorerTab(state.route);
   let h = '<section class="domain-view"><div class="domain-head"><div>';
-  h += '<h2 class="domain-title">Explorer</h2>';
+  h += '<h2 class="domain-title">Data Explorer</h2>';
   h += '<p class="domain-sub">The pipeline behind the domains: workflow definitions, output data, generated reports and the pinned environment.</p>';
   h += '</div></div>';
   h += buildExplorerNav(tab);
@@ -444,7 +420,7 @@ async function render() {
 
   // A snapshot carried in the URL wins over the in-memory context.
   const wanted = state.route.query.snapshot;
-  if (wanted && getSnapshot(wanted)) setCurrentSnapshot(wanted);
+  if (wanted) setCurrentSnapshot(wanted);
 
   let bundle;
   try {
@@ -458,13 +434,12 @@ async function render() {
     renderMasthead(bundle);
     state.renderedSnapshot = getCurrentSnapshotId();
   }
-  renderNav();
+  renderSidebar();
   document.title = `${state.config?.study?.label || 'open.gismo'} — ${titleFor(state.route)}`;
 
   const view = state.route.view;
   if (view === 'safety') return renderSafety(bundle);
   if (view === 'rbqm') return renderRbqm(bundle);
-  if (view === 'compare') return renderCompare(bundle);
   if (view === 'explorer') return renderExplorer(bundle);
   return renderOverview(bundle);
 }
@@ -472,6 +447,8 @@ async function render() {
 function titleFor(route) {
   const d = domain(route.view);
   if (d) return d.label;
+  if (route.view === 'overview') return 'Study Overview';
+  if (route.view === 'explorer') return 'Data Explorer';
   return route.view.charAt(0).toUpperCase() + route.view.slice(1);
 }
 
@@ -480,8 +457,9 @@ function titleFor(route) {
 export async function boot() {
   if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
   els.masthead = document.getElementById('masthead');
-  els.nav = document.getElementById('domainNav');
+  els.sidebar = document.getElementById('sidebar');
   els.view = document.getElementById('view');
+  state.sidebarCollapsed = readCollapsed();
 
   const [config, snapshots] = await Promise.all([
     loadStudyConfig(),

@@ -9,11 +9,12 @@
    Sections
      1. Tokens
      2. Base + a11y primitives
-     3. Masthead: timeline, provenance chip
-     4. Domain switcher + sub-navigation
-     5. Shared components: tiles, chips, pills, tags, tables, empty states
-     6. Views: overview, gallery, chart page, RBQM matrix, compare
-     7. Explorer (pipeline / data / reports / packages) — retuned to paper
+     3. App frame: collapsible sidebar
+     4. Masthead: timeline, provenance chip
+     5. Explorer sub-navigation
+     6. Shared components: tiles, pills, tags, tables, empty states
+     7. Views: overview, gallery, chart page, RBQM overview table
+     8. Explorer (pipeline / data / reports / packages) — retuned to paper
    ========================================================================== */
 
 /* ---- 1. Tokens ----------------------------------------------------------- */
@@ -55,9 +56,12 @@
   --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
   --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Layout */
+  /* Layout — the sidebar owns the left edge, so the content band pads from it
+     rather than centring against the viewport. */
   --measure: 78rem;
-  --band-pad: max(calc(50vw - (var(--measure) / 2)), 1.5rem);
+  --band-pad: clamp(1.25rem, 3vw, 2.5rem);
+  --rail-w: 3.75rem;
+  --side-w: 14.5rem;
   --radius: 14px;
   --radius-small: 10px;
 
@@ -125,20 +129,42 @@ a:hover { text-decoration: underline; }
   }
 }
 
-/* ---- 3. Masthead --------------------------------------------------------- */
+/* ---- 3. App frame -------------------------------------------------------- */
 
-.masthead {
-  background: var(--side-bg);
-  color: var(--side-ink);
-  padding: 1.4rem var(--band-pad) 0;
-  border-bottom: 3px solid var(--accent);
+.app { display: flex; align-items: flex-start; min-height: 100vh; }
+
+.app-main {
+  flex: 1 1 auto;
+  min-width: 0;                       /* lets wide tables scroll, not the page */
+  display: flex; flex-direction: column;
+  min-height: 100vh;
 }
 
-.masthead-inner { max-width: var(--measure); margin: 0 auto; }
+/* The espresso side band: full height, collapsing to a slim rail. */
+.sidebar {
+  flex: 0 0 var(--side-w);
+  width: var(--side-w);
+  align-self: stretch;
+  position: sticky; top: 0;
+  height: 100vh;
+  background: var(--side-bg);
+  color: var(--side-ink);
+  border-right: 1px solid #3a281d;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: flex-basis 0.18s ease, width 0.18s ease;
+  z-index: 30;
+}
+.sidebar[data-collapsed='true'] { flex-basis: var(--rail-w); width: var(--rail-w); }
 
-.masthead-top {
-  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
-  margin-bottom: 1.1rem;
+.sidebar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.5rem; padding: 0.9rem 0.75rem 0.9rem 1rem;
+  border-bottom: 1px solid #3a281d;
+  min-height: 3.25rem;
+}
+.sidebar[data-collapsed='true'] .sidebar-head {
+  flex-direction: column; gap: 0.6rem; padding: 0.75rem 0.4rem;
 }
 
 .wordmark {
@@ -151,48 +177,118 @@ a:hover { text-decoration: underline; }
 }
 .wordmark:hover { text-decoration: none; color: #fff; }
 .wordmark-accent { color: var(--accent-bright); }
+.wordmark-rail { display: none; }
+.sidebar[data-collapsed='true'] .wordmark-full { display: none; }
+.sidebar[data-collapsed='true'] .wordmark-rail { display: inline; font-size: 1rem; }
 
-.masthead-note {
-  font-size: 0.78rem;
+.sidebar-toggle {
+  appearance: none; cursor: pointer; font: inherit; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.85rem; height: 1.85rem; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #4a3327; border-radius: var(--radius-small);
   color: var(--side-soft);
-  flex: 1 1 16rem;
-  min-width: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sidebar-toggle:hover { background: rgba(255, 255, 255, 0.14); color: #fff; border-color: var(--accent-bright); }
+.sidebar-toggle-mark { font-size: 0.9rem; }
+
+.sidebar-list { list-style: none; margin: 0.6rem 0 0; padding: 0 0.5rem; }
+.sidebar-item + .sidebar-item { margin-top: 0.15rem; }
+
+.sidebar-link {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.6rem 0.65rem;
+  border-radius: var(--radius-small);
+  color: var(--side-soft);
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sidebar-link:hover { background: rgba(255, 255, 255, 0.07); color: #fff; text-decoration: none; }
+.sidebar-link.is-active {
+  background: rgba(249, 115, 22, 0.14);
+  border-left-color: var(--accent-bright);
+  color: #fff; font-weight: 600;
+}
+
+.sidebar-mark {
+  flex: 0 0 1.6rem;
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em;
+  text-align: center; color: var(--side-soft);
+}
+.sidebar-link.is-active .sidebar-mark { color: var(--accent-bright); }
+.sidebar-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Collapsed: labels leave the page, never the accessibility tree. */
+.sidebar[data-collapsed='true'] .sidebar-list { padding: 0 0.35rem; }
+.sidebar[data-collapsed='true'] .sidebar-link { justify-content: center; padding: 0.6rem 0.2rem; gap: 0; }
+.sidebar[data-collapsed='true'] .sidebar-label {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.sidebar[data-collapsed='true'] .sidebar-mark { flex: 0 0 auto; font-size: 0.72rem; }
+
+/* ---- 4. Masthead --------------------------------------------------------- */
+
+/* One dense row. The reader came for the data; the header is a label, not a
+   landing page. */
+.masthead {
+  background: var(--side-bg);
+  color: var(--side-ink);
+  padding: 0.55rem var(--band-pad);
+  border-bottom: 2px solid var(--accent);
+}
+
+.masthead-inner { max-width: var(--measure); margin: 0 auto; }
+
+.masthead-row {
+  display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap;
+  row-gap: 0.35rem;
 }
 
 .study-title {
-  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  font-size: 1.2rem;
   color: #fff;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.35rem;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
 }
 
 .study-facts {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--side-soft);
-  margin-bottom: 1.2rem;
+  min-width: 0;
 }
 .study-facts .num { color: #fff; font-weight: 500; }
-.dot-sep { margin: 0 0.55rem; color: #7a5c48; }
+.fact-flag { color: #fed7aa; }
+.dot-sep { margin: 0 0.45rem; color: #7a5c48; }
 
-/* Snapshot timeline */
+.masthead-aside {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Snapshot timeline — inline in the masthead row. */
 .timeline {
-  display: flex; align-items: stretch; gap: 0;
-  overflow-x: auto; padding-bottom: 1.1rem;
+  display: flex; align-items: center; gap: 0;
+  overflow-x: auto; max-width: 100%;
   scrollbar-width: thin;
 }
-.timeline-empty { font-size: 0.78rem; color: var(--side-soft); padding-bottom: 1.2rem; }
+.timeline-empty { font-size: 0.72rem; color: var(--side-soft); }
 
 .timeline-dot {
   appearance: none; background: none; border: none; cursor: pointer;
-  display: flex; flex-direction: column; gap: 0.3rem;
-  padding: 0.35rem 0.75rem; color: var(--side-soft);
-  font: inherit; font-size: 0.75rem; text-align: left; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.25rem 0.5rem; color: var(--side-soft);
+  font: inherit; font-size: 0.7rem; flex-shrink: 0;
   border-radius: var(--radius-small);
   transition: color 0.15s, background 0.15s;
 }
-.timeline-dot:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+.timeline-dot:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
 .timeline-dot .timeline-mark {
-  width: 11px; height: 11px; border-radius: 50%;
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
   border: 2px solid var(--side-soft); background: transparent;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
@@ -201,14 +297,16 @@ a:hover { text-decoration: underline; }
 .timeline-dot.is-active .timeline-mark {
   background: var(--accent-bright);
   border-color: var(--accent-bright);
-  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.22);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.22);
 }
-.timeline-label { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.timeline-id { font-family: var(--mono); font-size: 0.68rem; color: #8a6a53; }
-.timeline-dot.is-active .timeline-id { color: var(--accent-bright); }
+.timeline-label { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 0.68rem; }
+.timeline-current {
+  font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: #8a6a53;
+}
+.timeline-dot.is-active .timeline-current { color: var(--accent-bright); }
 .timeline-rule {
-  align-self: center; flex: 0 0 1.5rem; height: 2px;
-  background: #4a3327; margin-top: -0.9rem;
+  flex: 0 0 0.9rem; height: 2px; background: #4a3327;
 }
 
 /* Provenance chip */
@@ -272,29 +370,7 @@ a:hover { text-decoration: underline; }
 .prov-foot { margin-top: 1rem; font-size: 0.78rem; color: var(--side-soft); }
 .prov-foot a { color: var(--accent-bright); }
 
-/* ---- 4. Domain switcher -------------------------------------------------- */
-
-.domain-nav {
-  background: var(--card);
-  border-bottom: 1px solid var(--rule);
-  padding: 0 var(--band-pad);
-  position: sticky; top: 0; z-index: 20;
-}
-.domain-nav-inner {
-  max-width: var(--measure); margin: 0 auto;
-  display: flex; gap: 0.25rem; overflow-x: auto;
-}
-.domain-tab {
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  color: var(--muted);
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-  text-decoration: none;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-.domain-tab:hover { color: var(--ink); background: var(--panel); text-decoration: none; }
-.domain-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+/* ---- 5. Explorer sub-navigation ------------------------------------------ */
 
 .subnav {
   display: flex; gap: 0.4rem; flex-wrap: wrap;
@@ -315,9 +391,13 @@ a:hover { text-decoration: underline; }
   margin-bottom: -1px; border-bottom: 1px solid var(--card);
 }
 
-/* ---- 5. Shared components ------------------------------------------------ */
+/* ---- 6. Shared components ------------------------------------------------ */
 
 .view {
+  /* A flex item with auto cross-axis margins opts out of `stretch`, so without
+     an explicit width the reading column collapses to fit-content and every
+     page ends up a different width. */
+  width: 100%;
   max-width: var(--measure);
   margin: 0 auto;
   padding: 2rem var(--band-pad) 4rem;
@@ -370,22 +450,6 @@ a:hover { text-decoration: underline; }
 .tile-ontrack .tile-value { color: var(--good); }
 .tiles-foot { font-size: 0.8rem; color: var(--muted); margin: 0.4rem 0 0; }
 
-/* Chips (compare summary) */
-.chips { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1.25rem 0 0.75rem; }
-.chip {
-  display: inline-flex; align-items: baseline; gap: 0.45rem;
-  background: var(--panel); border: 1px solid var(--rule);
-  border-radius: 999px; padding: 0.4rem 0.95rem;
-}
-.chip-value { font-size: 1.15rem; font-weight: 600; }
-.chip-label { font-size: 0.8rem; color: var(--muted); }
-.chip-added { border-color: var(--good-rule); background: var(--good-bg); }
-.chip-added .chip-value { color: var(--good); }
-.chip-changed { border-color: var(--warn-rule); background: var(--warn-bg); }
-.chip-changed .chip-value { color: var(--warn); }
-.chip-removed { border-color: var(--bad-rule); background: var(--bad-bg); }
-.chip-removed .chip-value { color: var(--bad); }
-
 /* Pills & tags */
 .pill {
   font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
@@ -412,15 +476,6 @@ a:hover { text-decoration: underline; }
 .phase-tag-3 { color: #047857; background: #ecfdf5; }
 .phase-tag-4 { color: #c2410c; background: #fff7ed; }
 .phase-tag-x { color: var(--muted); background: var(--panel); }
-
-.state {
-  display: inline-block; font-size: 0.72rem; font-weight: 600;
-  padding: 0.12rem 0.5rem; border-radius: 5px; white-space: nowrap;
-}
-.state-added, .state-better, .state-flag-ontrack { color: var(--good); background: var(--good-bg); }
-.state-changed, .state-worse, .state-flag-amber { color: var(--warn); background: var(--warn-bg); }
-.state-removed, .state-flag-red { color: var(--bad); background: var(--bad-bg); }
-.state-identical, .state-not-compared, .state-same, .state-flag-none { color: var(--muted); background: var(--panel); }
 
 /* Buttons & fields */
 .btn-toggle, .btn-link {
@@ -455,16 +510,6 @@ a:hover { text-decoration: underline; }
   overscroll-behavior: contain;
 }
 table { border-collapse: collapse; width: 100%; }
-.compare-table, .matrix { font-size: 0.85rem; }
-.compare-table th, .compare-table td { padding: 0.55rem 0.9rem; text-align: left; }
-.compare-table thead th {
-  background: var(--panel); color: var(--muted);
-  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
-  border-bottom: 1px solid var(--rule); position: sticky; top: 0;
-}
-.compare-table tbody tr + tr td { border-top: 1px solid var(--rule); }
-.compare-table tbody tr:hover td { background: var(--panel); }
-.compare-note-cell { color: var(--muted); font-size: 0.8rem; }
 
 /* Empty / loading / error */
 .empty-state {
@@ -487,6 +532,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 .site-foot {
+  margin-top: auto;                   /* main axis: keeps the foot at the bottom */
   background: var(--side-bg); color: var(--side-soft);
   padding: 1.5rem var(--band-pad); font-size: 0.8rem;
 }
@@ -496,7 +542,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 .site-foot a { color: var(--accent-bright); }
 
-/* ---- 6. Views ------------------------------------------------------------ */
+/* ---- 7. Views ------------------------------------------------------------ */
 
 /* Gallery */
 .chart-grid {
@@ -554,7 +600,7 @@ table { border-collapse: collapse; width: 100%; }
   width: 100%; height: min(78vh, 900px); border: none; display: block; background: #fff;
 }
 
-/* RBQM matrix */
+/* RBQM overview table */
 .legend {
   display: flex; gap: 1.25rem; flex-wrap: wrap;
   list-style: none; margin: 0 0 0.75rem; padding: 0;
@@ -567,37 +613,12 @@ table { border-collapse: collapse; width: 100%; }
 .legend-ontrack .legend-swatch { background: var(--good); }
 .legend-none .legend-swatch { background: var(--rule); border: 1px solid var(--faint); }
 
-.matrix { font-size: 0.8rem; }
-.matrix th, .matrix td { border-bottom: 1px solid var(--rule); }
-.matrix thead th {
-  position: sticky; top: 0; z-index: 2;
-  background: var(--panel); color: var(--muted);
-  font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-  padding: 0.5rem 0.4rem; text-align: center; white-space: nowrap;
-}
-.matrix thead th abbr { text-decoration: none; border-bottom: 1px dotted var(--faint); cursor: help; }
-.matrix .matrix-corner, .matrix .matrix-group {
-  position: sticky; left: 0; z-index: 1;
-  background: var(--card); text-align: left;
-  padding: 0.4rem 0.8rem; min-width: 11rem;
-  border-right: 1px solid var(--rule);
-}
-.matrix .matrix-corner { z-index: 3; background: var(--panel); }
-.matrix-group { font-weight: 500; }
-.matrix-group .mono { font-size: 0.78rem; }
-.matrix-group-sub { display: block; font-size: 0.7rem; color: var(--muted); font-weight: 400; }
-.matrix tbody tr:hover td { background: #fdfaf6; }
-.matrix .cell { text-align: center; padding: 0.3rem 0.35rem; }
-.cell-mark {
-  display: inline-flex; align-items: center; gap: 0.25rem;
-  padding: 0.1rem 0.35rem; border-radius: 5px; font-size: 0.72rem; line-height: 1.4;
-}
-.cell-glyph { font-size: 0.9rem; line-height: 1; }
-.cell-text { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
-.cell-red .cell-mark { color: var(--bad); background: var(--bad-bg); }
-.cell-amber .cell-mark { color: var(--warn); background: var(--warn-bg); }
-.cell-ontrack .cell-mark { color: var(--good); }
-.cell-none .cell-mark { color: var(--faint); }
+.level-switch { display: inline-flex; gap: 0.35rem; }
+
+/* The gsm.viz groupOverview mount point. The widget owns the table's structure
+   and its flag icons; group-overview.css tunes its skin to the espresso tokens
+   and this rule gives it room to breathe inside the scroll box. */
+.kri-table { padding: 0.15rem; min-height: 4rem; }
 
 /* Module report links */
 .report-links { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
@@ -637,19 +658,36 @@ table { border-collapse: collapse; width: 100%; }
 
 .chart-grid-preview { margin-top: 0.25rem; }
 
-/* Compare */
-.compare-controls {
-  display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;
-  background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius);
-  padding: 1rem 1.15rem;
+/* Study Overview: the snapshot record */
+.snap-grid {
+  display: grid; gap: 0.9rem 1.75rem; margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
 }
-.compare-vs { color: var(--muted); font-size: 0.85rem; padding-bottom: 0.5rem; }
-.compare-note {
-  font-size: 0.82rem; color: var(--muted); margin: 0.4rem 0 0; max-width: 62rem; line-height: 1.55;
+.snap-field { min-width: 0; }
+.snap-label {
+  font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--muted); margin-bottom: 0.15rem;
 }
-.compare-note strong { color: var(--ink); }
+.snap-value { font-size: 0.88rem; margin: 0; word-break: break-word; }
 
-/* ---- 7. Explorer (legacy views, retuned) --------------------------------- */
+/* RBQM: the 4_modules static chart exports */
+.static-grid {
+  display: grid; gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+.static-card {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius-small);
+  padding: 0.6rem 0.8rem; color: inherit; text-decoration: none;
+  transition: border-color 0.15s;
+}
+.static-card:hover { border-color: var(--accent-bright); text-decoration: none; }
+.static-card-title { font-size: 0.85rem; }
+.static-card-id { font-size: 0.68rem; color: var(--muted); }
+
+/* ---- 8. Explorer (legacy views, retuned) --------------------------------- */
 
 .explorer-body { min-height: 12rem; }
 .explorer-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -988,5 +1026,32 @@ table { border-collapse: collapse; width: 100%; }
   .chart-meta { gap: 1rem; }
   .explorer-layout { flex-direction: column; height: auto; }
   .explorer-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--rule); max-height: 16rem; }
-  .matrix .matrix-corner, .matrix .matrix-group { position: static; min-width: 9rem; }
+
+  /* Narrow screens: the side band becomes a top strip, so the reading column
+     keeps the full width. */
+  .app { flex-direction: column; }
+  .sidebar, .sidebar[data-collapsed='true'] {
+    flex: 0 0 auto; width: 100%; height: auto;
+    position: static; border-right: none; border-bottom: 1px solid #3a281d;
+  }
+  .sidebar-head, .sidebar[data-collapsed='true'] .sidebar-head {
+    flex-direction: row; padding: 0.6rem var(--band-pad); min-height: 0; border-bottom: none;
+  }
+  .sidebar-list, .sidebar[data-collapsed='true'] .sidebar-list {
+    display: flex; gap: 0.25rem; overflow-x: auto;
+    margin: 0; padding: 0 var(--band-pad) 0.5rem;
+  }
+  .sidebar-item + .sidebar-item { margin-top: 0; }
+  .sidebar-link, .sidebar[data-collapsed='true'] .sidebar-link {
+    border-left: none; border-bottom: 3px solid transparent;
+    border-radius: var(--radius-small) var(--radius-small) 0 0;
+    padding: 0.45rem 0.7rem; gap: 0.45rem; justify-content: flex-start;
+  }
+  .sidebar-link.is-active { border-left-color: transparent; border-bottom-color: var(--accent-bright); }
+  .sidebar[data-collapsed='true'] .sidebar-label {
+    position: static; width: auto; height: auto; margin: 0;
+    clip: auto; clip-path: none;
+  }
+  .sidebar-toggle { display: none; }
+  .masthead-aside { margin-left: 0; width: 100%; }
 }

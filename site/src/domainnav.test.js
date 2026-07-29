@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildDomainNav, buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
-
-const DOMAINS = [
-  { key: 'safety', label: 'Safety', charts: 'safety.viz', workflows: [] },
-  { key: 'rbqm', label: 'RBQM', charts: 'gsm.viz', workflows: [] },
-];
+import { buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
 
 function mount(html) {
   const el = document.createElement('div');
@@ -14,38 +9,6 @@ function mount(html) {
 }
 
 beforeEach(() => { document.body.innerHTML = ''; });
-
-describe('buildDomainNav', () => {
-  it('renders Overview, one tab per registry domain, then Compare and Explorer', () => {
-    const el = mount(buildDomainNav(DOMAINS, 'overview'));
-    const tabs = [...el.querySelectorAll('.domain-tab')].map((a) => a.textContent);
-    expect(tabs).toEqual(['Overview', 'Safety', 'RBQM', 'Compare', 'Explorer']);
-  });
-
-  it('is driven by the registry — a third domain needs no code change', () => {
-    const el = mount(buildDomainNav([...DOMAINS, { key: 'qtl', label: 'QTL' }], 'qtl'));
-    const tabs = [...el.querySelectorAll('.domain-tab')].map((a) => a.textContent);
-    expect(tabs).toContain('QTL');
-    expect(el.querySelector('.domain-tab.is-active').textContent).toBe('QTL');
-  });
-
-  it('marks the active view with aria-current', () => {
-    const el = mount(buildDomainNav(DOMAINS, 'rbqm'));
-    const active = el.querySelector('[aria-current="page"]');
-    expect(active.dataset.view).toBe('rbqm');
-  });
-
-  it('links each tab to its hash route', () => {
-    const el = mount(buildDomainNav(DOMAINS, 'overview'));
-    const hrefs = [...el.querySelectorAll('.domain-tab')].map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['#/overview', '#/safety', '#/rbqm', '#/compare', '#/explorer']);
-  });
-
-  it('still renders with an empty registry', () => {
-    const el = mount(buildDomainNav([], 'overview'));
-    expect(el.querySelectorAll('.domain-tab')).toHaveLength(3);
-  });
-});
 
 describe('buildExplorerNav', () => {
   it('keeps the four original pipeline views as secondary navigation', () => {

@@ -7,19 +7,27 @@
 </head>
 <body>
 <a class="skip-link" href="#view">Skip to content</a>
-<header id="masthead" class="masthead">
-  <div class="masthead-inner"><div class="masthead-top"><span class="wordmark">open.<span class="wordmark-accent">gismo</span></span></div></div>
-</header>
-<div id="domainNav"></div>
-<main id="view" class="view" tabindex="-1">
-  <div class="loading"><span class="spinner"></span> Reading the published snapshot…</div>
-</main>
-<footer class="site-foot">
-  <div class="site-foot-inner">
-    <span>Static study site — every view is read from the published snapshot tree.</span>
-    <a href="https://github.com/jwildfire/open.gismo" target="_blank" rel="noopener">open.gismo on GitHub ↗</a>
+<div class="app">
+  <nav id="sidebar" class="sidebar" aria-label="Sections" data-collapsed="false">
+    <div class="sidebar-head">
+      <span class="wordmark"><span class="wordmark-full">open.<span class="wordmark-accent">gismo</span></span></span>
+    </div>
+  </nav>
+  <div class="app-main">
+    <header id="masthead" class="masthead">
+      <div class="masthead-inner"><div class="masthead-row"><h1 class="study-title">Study</h1></div></div>
+    </header>
+    <main id="view" class="view" tabindex="-1">
+      <div class="loading"><span class="spinner"></span> Reading the published snapshot…</div>
+    </main>
+    <footer class="site-foot">
+      <div class="site-foot-inner">
+        <span>Static study site — every view is read from the published snapshot tree.</span>
+        <a href="https://github.com/jwildfire/open.gismo" target="_blank" rel="noopener">open.gismo on GitHub ↗</a>
+      </div>
+    </footer>
   </div>
-</footer>
+</div>
 <div id="detailModal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Workflow details">
   <div class="modal-content" id="detailModalContent"></div>
 </div>

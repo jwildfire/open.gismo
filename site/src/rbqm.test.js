@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  buildFlagTiles, buildMatrixCell, buildMatrixTable, buildMatrixLegend,
-  buildModuleReports, buildRbqmView, buildModuleReportPage,
+  buildFlagTiles, buildFlagLegend, buildLevelSwitch, buildOverviewTable, plural,
+  buildModuleReports, buildStaticCharts, buildRbqmView, buildModuleReportPage,
 } from './rbqm.js';
-import { summarizeFlags, buildMatrix, metricIndex, groupIndex } from './flags.js';
+import { summarizeFlags } from './flags.js';
 
 const rows = [
   { GroupID: 'S1', MetricID: 'Analysis_kri0001', Flag: '2', GroupLevel: 'Site', Score: '3.2' },
@@ -14,20 +14,14 @@ const rows = [
   { GroupID: 'S3', MetricID: 'Analysis_kri0002', Flag: '0', GroupLevel: 'Site', Score: '0.3' },
 ];
 
-const metrics = metricIndex([
-  { MetricID: 'Analysis_kri0001', ID: 'kri0001', Abbreviation: 'AE', Metric: 'Adverse Event Rate', GroupLevel: 'Site' },
-  { MetricID: 'Analysis_kri0002', ID: 'kri0002', Abbreviation: 'SAE', Metric: 'Serious Adverse Event Rate', GroupLevel: 'Site' },
-]);
-
-const groups = groupIndex([
-  { GroupID: 'S1', Param: 'InvestigatorLastName', Value: 'Smith', GroupLevel: 'Site' },
-  { GroupID: 'S1', Param: 'Country', Value: 'US', GroupLevel: 'Site' },
-], 'Site');
-
 const MODULES = {
   reports: [
     { id: 'report_kri_site', title: 'Site-Level Key Risk Indicator Report', html: 'output/4_modules/report_kri_site/x.html', group_level: 'Site' },
     { id: 'report_kri_country', title: 'Country-Level Key Risk Indicator Report', html: 'output/4_modules/report_kri_country/y.html', group_level: 'Country' },
+  ],
+  static_charts: [
+    { metric: 'cou0001', title: 'Adverse Event Rate', png: 'output/4_modules/static/cou0001.png' },
+    { metric: 'cou0002', title: 'Serious Adverse Event Rate', png: 'output/4_modules/static/cou0002.png' },
   ],
 };
 
@@ -64,63 +58,71 @@ describe('buildFlagTiles', () => {
   });
 });
 
-describe('buildMatrixCell', () => {
-  it('carries a glyph and an aria-label naming group, metric and level', () => {
-    const el = mount(`<table><tr>${buildMatrixCell({ level: 'red', flag: '2' }, 'S1', 'Adverse Event Rate')}</tr></table>`);
-    const mark = el.querySelector('.cell-mark');
-    expect(mark.getAttribute('aria-label')).toBe('S1, Adverse Event Rate: Red flag (high)');
-    expect(el.querySelector('.cell-glyph').textContent).toBe('●');
-  });
-
-  it('adds a visible text label for flagged cells', () => {
-    const red = mount(`<table><tr>${buildMatrixCell({ level: 'red', flag: '2' }, 'S1', 'M')}</tr></table>`);
-    expect(red.querySelector('.cell-text').textContent).toBe('Red');
-    document.body.innerHTML = '';
-    const clear = mount(`<table><tr>${buildMatrixCell({ level: 'ontrack', flag: '0' }, 'S1', 'M')}</tr></table>`);
-    expect(clear.querySelector('.cell-text')).toBe(null);
-    expect(clear.querySelector('.cell-mark').getAttribute('aria-label')).toContain('On track');
-  });
-
-  it('renders an absent cell as not evaluated', () => {
-    const el = mount(`<table><tr>${buildMatrixCell(null, 'S1', 'M')}</tr></table>`);
-    expect(el.querySelector('.cell-mark').getAttribute('aria-label')).toContain('Not evaluated');
+describe('plural', () => {
+  it('pluralises the group levels the pipeline produces', () => {
+    expect(plural('Site')).toBe('sites');
+    expect(plural('Country')).toBe('countries');
+    expect(plural('Study')).toBe('studies');
+    expect(plural()).toBe('groups');
   });
 });
 
-describe('buildMatrixTable', () => {
-  it('renders flagged groups as rows and metrics as columns', () => {
-    const matrix = buildMatrix(rows, { groupLevel: 'Site', flaggedOnly: true });
-    const el = mount(buildMatrixTable(matrix, metrics, groups));
-    const bodyRows = el.querySelectorAll('tbody tr');
-    expect(bodyRows).toHaveLength(2); // S1, S2
-    expect(el.querySelectorAll('thead th')).toHaveLength(3); // corner + 2 metrics
-    expect(el.querySelector('thead .matrix-metric abbr').getAttribute('title')).toBe('Adverse Event Rate');
+describe('buildLevelSwitch', () => {
+  it('offers each available group level, the active one pressed', () => {
+    const el = mount(buildLevelSwitch(['Site', 'Country'], 'Site'));
+    const btns = [...el.querySelectorAll('[data-level]')];
+    expect(btns.map((b) => b.textContent)).toEqual(['Site', 'Country']);
+    expect(btns[0].getAttribute('aria-pressed')).toBe('true');
+    expect(btns[1].getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('adds the investigator sub-label when group metadata exists', () => {
-    const matrix = buildMatrix(rows, { groupLevel: 'Site', flaggedOnly: true });
-    const el = mount(buildMatrixTable(matrix, metrics, groups));
-    expect(el.querySelector('.matrix-group-sub').textContent).toBe('Smith, US');
-  });
-
-  it('scrolls wide content in its own container, not the page', () => {
-    const matrix = buildMatrix(rows, { groupLevel: 'Site', flaggedOnly: false });
-    const el = mount(buildMatrixTable(matrix, metrics, groups));
-    expect(el.querySelector('.table-scroll')).toBeTruthy();
-    expect(el.querySelector('caption').textContent).toContain('flag matrix');
-  });
-
-  it('says so when nothing is flagged', () => {
-    const clean = rows.map((r) => ({ ...r, Flag: '0' }));
-    const matrix = buildMatrix(clean, { groupLevel: 'Site', flaggedOnly: true });
-    const el = mount(buildMatrixTable(matrix, metrics, groups));
-    expect(el.textContent).toContain('No flagged sites');
+  it('stays out of the way when there is only one level', () => {
+    expect(buildLevelSwitch(['Site'], 'Site')).toBe('');
+    expect(buildLevelSwitch([], 'Site')).toBe('');
   });
 });
 
-describe('buildMatrixLegend', () => {
-  it('spells out the flag vocabulary', () => {
-    const el = mount(buildMatrixLegend());
+describe('buildOverviewTable', () => {
+  it('renders the mount point the gsm.viz widget attaches to', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Site', levels: ['Site'], groupCount: 3, metricCount: 2 }));
+    const mountPoint = el.querySelector('#kriTable');
+    expect(mountPoint).toBeTruthy();
+    expect(mountPoint.dataset.groupLevel).toBe('Site');
+  });
+
+  it('names the widget and the shape of what it is showing', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Site', levels: ['Site', 'Country'], groupCount: 3, metricCount: 2 }));
+    const note = el.querySelector('.section-note').textContent;
+    expect(note).toContain('groupOverview');
+    expect(note).toContain('gsm.viz');
+    expect(note).toContain('3 sites');
+    expect(note).toContain('2');
+  });
+
+  it('says "countries", not "countrys"', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Country', levels: ['Site', 'Country'], groupCount: 3, metricCount: 12 }));
+    expect(el.querySelector('.section-note').textContent).toContain('3 countries');
+  });
+
+  it('scrolls a wide table inside its own container, not the page', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Site', levels: ['Site'] }));
+    expect(el.querySelector('.table-scroll #kriTable')).toBeTruthy();
+  });
+
+  it('says so when the level has no results', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Country', levels: ['Site', 'Country'], empty: true }));
+    expect(el.textContent).toContain('No country-level results');
+  });
+
+  it('surfaces a mount failure rather than showing an empty box', () => {
+    const el = mount(buildOverviewTable({ groupLevel: 'Site', levels: ['Site'], error: 'boom' }));
+    expect(el.querySelector('.error-msg').textContent).toContain('boom');
+  });
+});
+
+describe('buildFlagLegend', () => {
+  it('spells out the flag vocabulary the table draws as icons', () => {
+    const el = mount(buildFlagLegend());
     expect(el.textContent).toContain('|flag| = 2');
     expect(el.textContent).toContain('On track');
     expect(el.textContent).toContain('Not evaluated');
@@ -141,37 +143,58 @@ describe('buildModuleReports', () => {
   });
 });
 
-describe('buildRbqmView', () => {
-  const view = (flaggedOnly = true) => buildRbqmView({
-    summary: summarizeFlags(rows, 'Site'),
-    matrix: buildMatrix(rows, { groupLevel: 'Site', flaggedOnly }),
-    metrics,
-    groups,
-    moduleReports: MODULES,
-    domain: { key: 'rbqm', label: 'RBQM', workflows: ['2_metrics', '3_reporting'] },
-    flaggedOnly,
+describe('buildStaticCharts', () => {
+  it('links each 4_modules PNG export', () => {
+    const el = mount(buildStaticCharts(MODULES));
+    const cards = [...el.querySelectorAll('.static-card')];
+    expect(cards).toHaveLength(2);
+    expect(cards[0].getAttribute('href')).toBe('output/4_modules/static/cou0001.png');
+    expect(cards[0].dataset.metric).toBe('cou0001');
+    expect(cards[0].textContent).toContain('Adverse Event Rate');
   });
 
-  it('assembles tiles, matrix and module reports', () => {
+  it('renders nothing when the snapshot exported no charts', () => {
+    expect(buildStaticCharts({ reports: [] })).toBe('');
+    expect(buildStaticCharts(null)).toBe('');
+  });
+});
+
+describe('buildRbqmView', () => {
+  const view = (extra = {}) => buildRbqmView({
+    summary: summarizeFlags(rows, 'Site'),
+    moduleReports: MODULES,
+    domain: { key: 'rbqm', label: 'RBQM', charts: 'gsm.viz', workflows: ['2_metrics', '3_reporting'] },
+    groupLevel: 'Site',
+    levels: ['Site', 'Country'],
+    groupCount: 3,
+    metricCount: 2,
+    ...extra,
+  });
+
+  it('assembles tiles, the overview table and the reports section', () => {
     const el = mount(view());
     expect(el.querySelectorAll('.tile')).toHaveLength(3);
-    expect(el.querySelector('.matrix')).toBeTruthy();
+    expect(el.querySelector('#kriTable')).toBeTruthy();
     expect(el.querySelectorAll('.report-link')).toHaveLength(2);
+    expect(el.querySelectorAll('.static-card')).toHaveLength(2);
   });
 
-  it('states how many groups are shown out of the total', () => {
+  it('shows the domain registry entry it was configured from', () => {
     const el = mount(view());
-    expect(el.querySelector('.section-note').textContent).toContain('2');
-    expect(el.querySelector('.section-note').textContent).toContain('3');
+    expect(el.querySelector('.domain-title').textContent).toBe('RBQM');
+    expect(el.querySelector('.domain-sub').textContent).toContain('gsm.viz');
   });
 
-  it('exposes the flagged-only toggle with a pressed state', () => {
-    const on = mount(view(true));
-    expect(on.querySelector('#matrixToggle').getAttribute('aria-pressed')).toBe('true');
-    document.body.innerHTML = '';
-    const off = mount(view(false));
-    expect(off.querySelector('#matrixToggle').getAttribute('aria-pressed')).toBe('false');
-    expect(off.querySelectorAll('tbody tr')).toHaveLength(3);
+  it('offers the group-level switch when more than one level is available', () => {
+    const el = mount(view());
+    expect([...el.querySelectorAll('[data-level]')].map((b) => b.dataset.level))
+      .toEqual(['Site', 'Country']);
+  });
+
+  it('no longer builds a hand-rolled flag matrix', () => {
+    const el = mount(view());
+    expect(el.querySelector('.matrix')).toBe(null);
+    expect(el.querySelector('#matrixToggle')).toBe(null);
   });
 });
 

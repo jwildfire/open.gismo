@@ -1,0 +1,116 @@
+/* ============================================================================
+   gsm.viz `groupOverview` — table skin.
+
+   Adapted from upstream `examples/groupOverview.css` (rbm-viz 2.4.0) onto the
+   open.gismo espresso tokens. Upstream ships its example stylesheet outside the
+   bundle, so the widget always needs one; this is ours, not vendored source —
+   see PROVENANCE.md.
+
+   The class names below are the widget's own: `.group-overview` on the table,
+   `.group-overview--{valueKey}` on group cells, `.group-overview--metric` on
+   metric cells, `.custom-tooltip` on the body-level tooltip. The flag icons are
+   inline SVG drawn by the widget, so a flagged cell is never colour alone: a
+   check, one arrow or two, with direction carried by the arrow.
+   ========================================================================== */
+
+.group-overview {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+
+.group-overview th,
+.group-overview td {
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+}
+
+.group-overview th.group-overview--tooltip,
+.group-overview td.group-overview--tooltip {
+  cursor: help;
+}
+
+/* ---- header -------------------------------------------------------------- */
+
+.group-overview thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, background 0.15s;
+}
+.group-overview thead th:hover { color: var(--accent); background: #efe6da; }
+.group-overview th.group-overview--metric { font-size: 0.64rem; padding: 0.55rem 0.3rem; }
+
+/* ---- body ---------------------------------------------------------------- */
+
+.group-overview tbody tr:hover td { background: #fdfaf6; }
+
+.group-overview td {
+  padding: 0.3rem 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.group-overview td.group-overview--GroupLabel {
+  white-space: nowrap;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  padding-left: 0.9rem;
+}
+
+.group-overview td.group-overview--nRedFlags,
+.group-overview td.group-overview--nAmberFlags {
+  font-weight: 600;
+}
+.group-overview td.group-overview--nRedFlags { color: var(--bad); background: var(--bad-bg); }
+.group-overview td.group-overview--nAmberFlags { color: var(--warn); background: var(--warn-bg); }
+
+.group-overview td.group-overview--siteRiskScore {
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.group-overview td.group-overview--metric {
+  width: 2.6em;
+  padding: 0.25rem 0.2rem;
+  cursor: pointer;
+  line-height: 0;
+}
+.group-overview td.group-overview--metric svg { vertical-align: middle; }
+
+/* ---- the widget's body-level tooltip ------------------------------------- */
+
+.custom-tooltip {
+  position: absolute;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-small);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: pre-line;
+  max-width: 24rem;
+  box-shadow: 0 6px 18px rgba(39, 24, 16, 0.16);
+  z-index: 1000;
+  pointer-events: auto;
+  display: none;
+}
+
+.custom-tooltip a { color: var(--accent); text-decoration: underline; }
+.custom-tooltip a:hover { color: var(--accent-bright); }

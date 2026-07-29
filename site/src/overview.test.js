@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildOverview, buildChangeList, overviewLoading } from './overview.js';
+import { buildOverview, buildChangeList, buildSnapshotSummary, overviewLoading } from './overview.js';
 import { summarizeFlags, metricIndex, groupIndex, flagDeltas } from './flags.js';
 import { chartCards } from './gallery.js';
 
@@ -62,14 +62,14 @@ describe('buildChangeList', () => {
     expect(el.textContent).toContain('No flag level changed');
   });
 
-  it('caps the list and links the rest to the compare view', () => {
+  it('caps the list and links the rest into the RBQM overview', () => {
     const many = Array.from({ length: 12 }, (_, i) => ({
       groupId: `S${i}`, metricId: 'Analysis_kri0001', from: '0', to: '2',
       fromLevel: 'ontrack', toLevel: 'red', kind: 'changed', direction: 'worse',
     }));
     const el = mount(buildChangeList(many, { metrics, groups }));
     expect(el.querySelectorAll('.change-item')).toHaveLength(8);
-    expect(el.querySelector('.change-more a').getAttribute('href')).toBe('#/compare');
+    expect(el.querySelector('.change-more a').getAttribute('href')).toBe('#/rbqm');
   });
 });
 
@@ -86,11 +86,13 @@ describe('buildOverview', () => {
     ...extra,
   });
 
-  it('interleaves the RBQM headline and the Safety preview', () => {
+  it('reads flags first, then what changed, then the charts, then provenance', () => {
     const el = mount(html());
     const titles = [...el.querySelectorAll('.section-title')].map((n) => n.textContent);
     expect(titles[0]).toContain('RBQM');
-    expect(titles[1]).toContain('Safety');
+    expect(titles[1]).toContain('Since');
+    expect(titles[2]).toContain('Safety');
+    expect(titles[3]).toContain('This snapshot');
     expect(el.querySelectorAll('.tile')).toHaveLength(3);
   });
 
@@ -116,10 +118,16 @@ describe('buildOverview', () => {
     expect(single.textContent).not.toContain('Since');
   });
 
-  it('links the change section to a pre-filled comparison', () => {
+  it('sends the change section into the RBQM overview table', () => {
     const el = mount(html());
     const links = [...el.querySelectorAll('.section-link')].map((a) => a.getAttribute('href'));
-    expect(links).toContain('#/compare?from=ps-001&to=ps-002');
+    expect(links).toContain('#/rbqm');
+    expect(links.some((h) => h.startsWith('#/compare'))).toBe(false);
+  });
+
+  it('always closes with the snapshot record, registry or no registry', () => {
+    const el = mount(html({ domains: [] }));
+    expect(el.querySelector('.snap-grid')).toBeTruthy();
   });
 
   it('renders only the domains present in the registry', () => {
@@ -130,5 +138,30 @@ describe('buildOverview', () => {
 
   it('has a loading state', () => {
     expect(overviewLoading()).toContain('spinner');
+  });
+});
+
+describe('buildSnapshotSummary', () => {
+  it('names the snapshot, its inputs and its pinned environment', () => {
+    const el = mount(buildSnapshotSummary({
+      currentSnapshot: { snapshot_id: 'ps-002', input_data_version: 'cut-2', package_snapshot: 'local-2026-07-28' },
+      pipelineStatus: 'completed',
+      packageCount: 7,
+      snapshotCount: 2,
+    }));
+    const text = el.textContent;
+    expect(text).toContain('ps-002');
+    expect(text).toContain('cut-2');
+    expect(text).toContain('local-2026-07-28');
+    expect(text).toContain('completed');
+    expect(text).toContain('7');
+    expect(el.querySelectorAll('.snap-field')).toHaveLength(6);
+  });
+
+  it('degrades to em dashes rather than blanks', () => {
+    const el = mount(buildSnapshotSummary({}));
+    expect(el.textContent).toContain('—');
+    expect(el.textContent).toContain('no manifest.csv');
+    expect(el.textContent).toContain('unknown');
   });
 });

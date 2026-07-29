@@ -35,11 +35,12 @@ describe('parseRoute', () => {
 
 describe('buildHash', () => {
   it('round-trips with parseRoute', () => {
-    const h = buildHash('compare', [], { from: 'ps-001', to: 'ps-002' });
-    expect(h).toBe('#/compare?from=ps-001&to=ps-002');
+    const h = buildHash('rbqm', ['report', 'report_kri_site'], { snapshot: 'ps-001' });
+    expect(h).toBe('#/rbqm/report/report_kri_site?snapshot=ps-001');
     const r = parseRoute(h);
-    expect(r.view).toBe('compare');
-    expect(r.query).toEqual({ from: 'ps-001', to: 'ps-002' });
+    expect(r.view).toBe('rbqm');
+    expect(r.params).toEqual(['report', 'report_kri_site']);
+    expect(r.query).toEqual({ snapshot: 'ps-001' });
   });
 
   it('drops empty query values and params', () => {

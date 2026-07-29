@@ -9,12 +9,11 @@
  *   #/overview
  *   #/safety                      #/safety/hep_explorer
  *   #/rbqm                        #/rbqm/report/report_kri_site
- *   #/compare?from=ps-001&to=ps-002
  *   #/explorer/workflows | data | reports | packages
  *   …any route + ?snapshot=ps-001
  */
 
-export const VIEWS = ['overview', 'safety', 'rbqm', 'compare', 'explorer'];
+export const VIEWS = ['overview', 'safety', 'rbqm', 'explorer'];
 export const EXPLORER_TABS = ['workflows', 'data', 'reports', 'packages'];
 export const DEFAULT_VIEW = 'overview';
 

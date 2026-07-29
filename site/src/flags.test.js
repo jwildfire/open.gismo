@@ -4,7 +4,6 @@ import {
   classifyFlag,
   flagLabel,
   summarizeFlags,
-  buildMatrix,
   flagDeltas,
   metricIndex,
   groupIndex,
@@ -93,39 +92,6 @@ describe('summarizeFlags', () => {
     const s = summarizeFlags([], 'Site');
     expect(s.red + s.amber + s.onTrack + s.notEvaluated).toBe(0);
     expect(s.groupCount).toBe(0);
-  });
-});
-
-describe('buildMatrix', () => {
-  const rows = [
-    row('S1', 'Analysis_kri0002', 0), row('S1', 'Analysis_kri0001', 2),
-    row('S2', 'Analysis_kri0001', 1), row('S2', 'Analysis_kri0002', 0),
-    row('S3', 'Analysis_kri0001', 0), row('S3', 'Analysis_kri0002', 0),
-  ];
-
-  it('collects the metric columns in sorted order', () => {
-    const m = buildMatrix(rows, { flaggedOnly: false });
-    expect(m.metricIds).toEqual(['Analysis_kri0001', 'Analysis_kri0002']);
-  });
-
-  it('orders groups worst-first', () => {
-    const m = buildMatrix(rows, { flaggedOnly: false });
-    expect(m.groups.map((g) => g.id)).toEqual(['S1', 'S2', 'S3']);
-    expect(m.groups[0].red).toBe(1);
-  });
-
-  it('filters to flagged groups by default and reports both counts', () => {
-    const m = buildMatrix(rows);
-    expect(m.groups.map((g) => g.id)).toEqual(['S1', 'S2']);
-    expect(m.allGroupCount).toBe(3);
-    expect(m.flaggedGroupCount).toBe(2);
-  });
-
-  it('exposes cells with their level, and null for absent pairs', () => {
-    const m = buildMatrix(rows, { flaggedOnly: false });
-    expect(m.cell('S1', 'Analysis_kri0001').level).toBe('red');
-    expect(m.cell('S3', 'Analysis_kri0001').level).toBe('ontrack');
-    expect(m.cell('S9', 'Analysis_kri0001')).toBe(null);
   });
 });
 
