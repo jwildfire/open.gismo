@@ -50,16 +50,34 @@ function rbqmContents(bundle) {
 }
 
 /**
- * Safety: its charts, one entry each, from the rendered chart manifest.
+ * Safety: its participant-level metrics, then its charts, one entry each.
  * Same shape as RBQM's — the nesting is a pattern, not a per-domain feature.
+ *
+ * Metrics come first because they are the shortest path to a finding: a chart
+ * asks the reader to look, a metric already counted. They are discovered from
+ * the reporting layer by `GroupLevel: Subject`, so a study that adds one gets
+ * it listed without a change here.
  */
 function safetyContents(bundle) {
-  return (bundle?.cards || []).map((c) => ({
-    key: c.id,
-    label: c.title || c.id,
-    href: buildHash('safety', [c.id]),
-    note: c.dataLabel || '',
-  }));
+  const out = [];
+  for (const m of (bundle?.reporting?.metrics || [])) {
+    if (String(m?.GroupLevel || '') !== 'Subject' || !m.ID) continue;
+    out.push({
+      key: m.ID,
+      label: String(m.Metric || m.ID).replace(/\s*\(Subject\)\s*$/, ''),
+      href: buildHash('safety', ['metric', m.ID]),
+      note: String(m.Abbreviation || ''),
+    });
+  }
+  for (const c of (bundle?.cards || [])) {
+    out.push({
+      key: c.id,
+      label: c.title || c.id,
+      href: buildHash('safety', [c.id]),
+      note: c.dataLabel || '',
+    });
+  }
+  return out;
 }
 
 const BUILDERS = {

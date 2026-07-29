@@ -17,7 +17,7 @@ import './vendor/gsm.viz/group-overview.css';
 import { esc } from './utils.js';
 import {
   loadWorkflows, loadWorkflowYaml, loadSnapshots, loadStudyConfig,
-  loadReportingLayer, loadJson, loadCsv,
+  loadReportingLayer, loadJson, loadCsv, loadSafetyCharts,
 } from './data.js';
 import {
   setSnapshots, getSnapshots, getCurrentSnapshot, getCurrentSnapshotId, setCurrentSnapshot,
@@ -30,10 +30,15 @@ import {
   markActive, sidebarSignature,
 } from './sidebar.js';
 import {
-  parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, rbqmSection, withSnapshot,
+  parseRoute, buildHash, explorerTab, safetyChartId, safetyMetricId,
+  rbqmReportId, rbqmSection, withSnapshot,
 } from './router.js';
 import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from './flags.js';
-import { chartCards, buildGallery, buildChartPage, mountChartFrame } from './gallery.js';
+import { chartCards, buildChartPage, mountChartFrame } from './gallery.js';
+import {
+  parseCensus, reviewQueue, buildSafetyOverview, buildSafetyStudyBlock,
+  buildMetricPage, metricDetail, queueForMetric,
+} from './safety.js';
 import {
   buildRbqmView, buildModuleReportPage, buildChartsPage, buildMetricsPage,
 } from './rbqm.js';
@@ -77,13 +82,18 @@ async function snapshotBundle(id) {
   const key = id || '__root__';
   if (state.bundles.has(key)) return state.bundles.get(key);
   const promise = (async () => {
-    const [status, manifest, safety, modules, reporting] = await Promise.all([
+    const [status, manifest, safety, modules, reporting, censusJson] = await Promise.all([
       loadJson('status.json', id).catch(() => null),
       loadCsv('manifest.csv', id).catch(() => []),
-      loadJson('output/3_reports/reports.json', id).catch(() => null),
+      loadSafetyCharts(id).catch(() => null),
       loadJson('output/4_modules/reports.json', id).catch(() => null),
       loadReportingLayer(id).catch(() => ({ results: [], metrics: [], groups: [] })),
+      loadJson('output/4_modules/safety_census.json', id).catch(() => null),
     ]);
+    // The evidence behind each participant flag, keyed by metric then
+    // participant. Discovered from the reporting layer, so a new
+    // GroupLevel: Subject metric is picked up without touching this file.
+    const evidence = await loadParticipantEvidence(reporting.metrics, id);
     const metrics = metricIndex(reporting.metrics);
     const groups = groupIndex(reporting.groups, 'Site');
     return {
@@ -94,6 +104,8 @@ async function snapshotBundle(id) {
       reporting,
       metrics,
       groups,
+      census: parseCensus(censusJson),
+      evidence,
       summary: summarizeFlags(reporting.results, 'Site'),
       facts: studyFacts(reporting.groups),
       cards: chartCards(safety),
@@ -102,6 +114,29 @@ async function snapshotBundle(id) {
   })();
   state.bundles.set(key, promise);
   return promise;
+}
+
+/**
+ * Per-participant evidence for every GroupLevel: Subject metric in this
+ * snapshot: `output/2_metrics/{ID}/Analysis_Input.csv`, keyed by metric ID then
+ * participant. These are one row per participant — a few hundred rows — not the
+ * mapped domains they were computed from.
+ */
+async function loadParticipantEvidence(metricRows, id) {
+  const ids = (metricRows || [])
+    .filter((m) => String(m.GroupLevel || '') === 'Subject')
+    .map((m) => String(m.ID || ''))
+    .filter(Boolean);
+  const out = {};
+  await Promise.all(ids.map(async (metricId) => {
+    try {
+      const rows = await loadCsv(`output/2_metrics/${metricId}/Analysis_Input.csv`, id);
+      out[metricId] = new Map(rows.map((r) => [String(r.SubjectID ?? r.GroupID), r]));
+    } catch {
+      // A metric with no saved input still flags; it just cannot explain why.
+    }
+  }));
+  return out;
 }
 
 /** A bundle for an arbitrary snapshot; the current context is irrelevant. */
@@ -170,6 +205,37 @@ function decorateLinks(root) {
 
 /* ── views ────────────────────────────────────────────────────────────────── */
 
+/** The snapshot published before the current one, or null at the first. */
+function previousSnapshot() {
+  const snaps = getSnapshots();
+  const idx = snaps.findIndex((s) => s.snapshot_id === getCurrentSnapshotId());
+  return idx > 0 ? snaps[idx - 1] : null;
+}
+
+/**
+ * The needs-case-review queue for a snapshot, ranked. The previous snapshot is
+ * loaded only to mark which participants are newly flagged; a first snapshot,
+ * or an unreadable previous one, still produces the queue.
+ */
+async function participantQueue(bundle) {
+  const prev = previousSnapshot();
+  let prevResults = [];
+  if (prev) {
+    try {
+      prevResults = (await bundleFor(prev.snapshot_id)).reporting.results;
+    } catch {
+      prevResults = [];
+    }
+  }
+  return reviewQueue({
+    results: bundle.reporting.results,
+    prevResults,
+    hasPrevious: Boolean(prev),
+    metrics: bundle.reporting.metrics,
+    evidence: bundle.evidence,
+  });
+}
+
 async function renderOverview(bundle) {
   els.view.innerHTML = overviewLoading();
   const snaps = getSnapshots();
@@ -190,6 +256,10 @@ async function renderOverview(bundle) {
   els.view.innerHTML = buildOverview({
     summary: bundle.summary,
     cards: bundle.cards,
+    safetyBlock: buildSafetyStudyBlock({
+      census: bundle.census,
+      queue: await participantQueue(bundle),
+    }),
     deltas,
     metrics: bundle.metrics,
     groups: bundle.groups,
@@ -203,10 +273,25 @@ async function renderOverview(bundle) {
   decorateLinks(els.view);
 }
 
-function renderSafety(bundle) {
+async function renderSafety(bundle) {
+  const metricId = safetyMetricId(state.route);
+  if (metricId) {
+    const queue = queueForMetric(await participantQueue(bundle), metricId);
+    els.view.innerHTML = buildMetricPage({
+      metric: metricDetail(bundle.reporting.metrics, bundle.reporting.results, metricId),
+      queue,
+    });
+    decorateLinks(els.view);
+    return;
+  }
   const chartId = safetyChartId(state.route);
   if (!chartId) {
-    els.view.innerHTML = buildGallery(bundle.cards, domain('safety'));
+    els.view.innerHTML = buildSafetyOverview({
+      census: bundle.census,
+      queue: await participantQueue(bundle),
+      cards: bundle.cards,
+      domain: domain('safety'),
+    });
     decorateLinks(els.view);
     return;
   }

@@ -109,9 +109,19 @@ export function buildOverview(o) {
   }
 
   // ── Safety headline ──────────────────────────────────────────────────────
+  // Study-level safety leads with its denominators — enrolment, exposure,
+  // deaths — before any chart, for the same reason the Safety page does: a
+  // count means nothing until you know what it is out of.
   const safety = domainOf('safety');
   if (safety) {
     const cards = (o.cards || []).slice(0, 4);
+    if (o.safetyBlock) {
+      h += '<div class="section-head">';
+      h += `<h2 class="section-title">${esc(safety.label || 'Safety')} <span class="section-kicker">study at this snapshot</span></h2>`;
+      h += `<a class="section-link" href="${esc(buildHash('safety'))}">open domain →</a>`;
+      h += '</div>';
+      h += o.safetyBlock;
+    }
     h += '<div class="section-head">';
     h += `<h2 class="section-title">${esc(safety.label || 'Safety')} <span class="section-kicker">charts</span></h2>`;
     h += `<a class="section-link" href="${esc(buildHash('safety'))}">open domain →</a>`;

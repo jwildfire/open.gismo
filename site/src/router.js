@@ -66,7 +66,17 @@ export function explorerTab(route) {
 
 /** The chart id a safety route points at, or null for the gallery. */
 export function safetyChartId(route) {
-  return route.view === 'safety' && route.params.length ? route.params[0] : null;
+  if (route.view !== 'safety' || !route.params.length) return null;
+  // `#/safety/metric/saf0001` is a metric page, not a chart called "metric".
+  if (route.params[0] === 'metric') return null;
+  return route.params[0];
+}
+
+/** The participant-metric id a safety route points at, or null. */
+export function safetyMetricId(route) {
+  if (route.view !== 'safety') return null;
+  if (route.params[0] !== 'metric') return null;
+  return route.params[1] || null;
 }
 
 /** The module-report id an rbqm route points at, or null for the monitor. */

@@ -55,7 +55,16 @@ export function availableLevels(reporting) {
   const order = ['Site', 'Country', 'Study'];
   const metricLevels = new Set((reporting?.metrics || []).map((m) => String(m.GroupLevel || '')));
   const resultLevels = new Set((reporting?.results || []).map((r) => String(r.GroupLevel || '')));
-  const found = [...metricLevels].filter((l) => l && resultLevels.has(l));
+  // A group overview needs groups: the reporting layer has to describe the
+  // entities as well as score them. Participant-level metrics (GroupLevel
+  // "Subject") produce results but no Reporting_Groups rows — they are a
+  // case-review queue on the Safety page, not a row in the KRI monitor — so
+  // requiring group metadata keeps them out of this selector rather than
+  // offering a level that would render an empty table.
+  const groupLevels = new Set((reporting?.groups || []).map((g) => String(g.GroupLevel || '')));
+  const found = [...metricLevels].filter(
+    (l) => l && resultLevels.has(l) && groupLevels.has(l),
+  );
   return found.sort((a, b) => {
     const ai = order.indexOf(a);
     const bi = order.indexOf(b);
