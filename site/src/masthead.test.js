@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   buildMasthead, buildTimeline, buildProvenanceChip, buildProvenancePanel,
-  wireMasthead, snapshotDate, snapshotDateTime, shortSnapshotId, buildFacts, buildSubtitle,
+  wireMasthead, snapshotDate, snapshotDateTime, shortSnapshotId, buildFacts,
 } from './masthead.js';
 
 const SNAPS = [
@@ -56,13 +56,19 @@ describe('buildTimeline', () => {
     expect(dots[0].classList.contains('is-active')).toBe(true);
   });
 
-  it('labels the newest snapshot as current and carries a text label per dot', () => {
+  it('carries a text label per dot and marks the newest as current', () => {
     const el = mount(buildTimeline(SNAPS, 'ps-002'));
     const labels = [...el.querySelectorAll('.timeline-label')].map((n) => n.textContent);
-    expect(labels[1]).toContain('current');
-    expect(labels[0]).toBe('2026-07-28');
+    expect(labels).toEqual(['ps-001', 'ps-002']);
+    const currents = [...el.querySelectorAll('.timeline-current')].map((n) => n.textContent);
+    expect(currents).toEqual(['current']);
+  });
+
+  it('keeps the date, time and input data version in the accessible name', () => {
+    const el = mount(buildTimeline(SNAPS, 'ps-002'));
     const aria = el.querySelectorAll('.timeline-dot')[0].getAttribute('aria-label');
     expect(aria).toContain('ps-001');
+    expect(aria).toContain('2026-07-28 18:31 UTC');
     expect(aria).toContain('cut-1');
   });
 
@@ -115,6 +121,11 @@ describe('buildProvenancePanel', () => {
     expect(el.textContent).toContain('not pinned');
   });
 
+  it('records the source data when the config names it', () => {
+    const el = mount(buildProvenancePanel(SNAPS[1], MANIFEST, 'completed', CONFIG));
+    expect(el.textContent).toContain('gsm.core example source');
+  });
+
   it('renders without a manifest', () => {
     const el = mount(buildProvenancePanel(SNAPS[1], [], 'completed'));
     expect(el.textContent).toContain('no manifest.csv');
@@ -133,9 +144,22 @@ describe('buildMasthead', () => {
     expect(el.querySelector('.study-title').textContent).toBe('DEMO-301 — Safety Review');
   });
 
-  it('carries the synthetic-data disclaimer', () => {
+  it('carries the synthetic-data disclaimer, inline in the facts strip', () => {
     const el = mount(html());
-    expect(el.querySelector('.masthead-note').textContent).toContain('Synthetic study');
+    expect(el.querySelector('.fact-flag').textContent).toContain('Synthetic study');
+  });
+
+  it('is one dense row: title, facts, timeline and provenance chip together', () => {
+    const el = mount(html());
+    const row = el.querySelector('.masthead-row');
+    expect(row).toBeTruthy();
+    expect(row.querySelector('.study-title')).toBeTruthy();
+    expect(row.querySelector('.study-facts')).toBeTruthy();
+    expect(row.querySelector('.timeline')).toBeTruthy();
+    expect(row.querySelector('#provChip')).toBeTruthy();
+    // No hero: the old subtitle line and its own row are gone.
+    expect(el.querySelector('.masthead-note')).toBe(null);
+    expect(el.querySelector('.masthead-top')).toBe(null);
   });
 
   it('shows study facts with tabular numbers', () => {
@@ -164,13 +188,19 @@ describe('buildMasthead', () => {
   });
 });
 
-describe('buildFacts / buildSubtitle', () => {
+describe('buildFacts', () => {
   it('omits the participant chip when counts are missing', () => {
-    expect(buildFacts(CONFIG, {})).toBe('Phase 2');
+    expect(buildFacts({ study: { phase: 'Phase 2' } }, {})).toBe('Phase 2');
   });
 
-  it('always mentions the static publication path', () => {
-    expect(buildSubtitle(CONFIG, {})).toContain('static files');
+  it('leads with the synthetic-data disclaimer when the study is synthetic', () => {
+    expect(buildFacts(CONFIG, {}).indexOf('Synthetic study')).toBeLessThan(
+      buildFacts(CONFIG, {}).indexOf('Phase 2'),
+    );
+  });
+
+  it('is empty for a study with nothing to declare', () => {
+    expect(buildFacts({ study: {} }, {})).toBe('');
   });
 });
 

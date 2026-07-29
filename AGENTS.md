@@ -38,9 +38,12 @@ artifacts. Config is purely YAML conventions.
 ### JavaScript Front-end
 
 1. Edit modules in `site/src/`. `main.js` is a two-line entry point; the shell
-   lives in `app.js`, which composes the chrome (`masthead.js`, `domainnav.js`,
-   `router.js`, `context.js`) with the domain views (`overview.js`, `gallery.js`,
-   `rbqm.js`, `compareview.js`) and the pipeline Explorer views.
+   lives in `app.js`, which composes the chrome (`sidebar.js`, `masthead.js`,
+   `domainnav.js`, `router.js`, `context.js`) with the domain views
+   (`overview.js`, `gallery.js`, `rbqm.js`, `kritable.js`) and the pipeline
+   Data Explorer views.
+   `site/src/vendor/` holds third-party source copied in verbatim — do not
+   hand-edit it; adapt around it and record the provenance beside it.
 2. Run `npx vitest --run` from `site/` to execute tests.
 3. Run `npm run build` from `site/` to verify the Vite build. It writes the
    single-file bundle to `inst/site/index.html` — the copy `og_init()` /

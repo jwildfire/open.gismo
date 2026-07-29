@@ -1,9 +1,15 @@
 /**
- * Study Overview — the masthead's landing view.
+ * Study Overview — the landing dashboard.
  *
- * Interleaves each domain's headline: RBQM flag tiles, a Safety chart preview
- * row, and — when the study has published more than one snapshot — the flag
- * changes since the previous one.
+ * A first-pass dashboard skeleton, in reading order:
+ *
+ *   1. flag tiles — the RBQM headline for this snapshot;
+ *   2. what changed since the previous snapshot — the flag-level deltas;
+ *   3. the safety chart shelf — what this snapshot rendered;
+ *   4. a compact snapshot record — the provenance summary in a few fields.
+ *
+ * Every panel links into the domain that owns it; nothing here is computed
+ * anywhere but from the snapshot tree.
  */
 
 import { esc } from './utils.js';
@@ -38,16 +44,43 @@ export function buildChangeList(deltas, o = {}) {
   }
   h += '</ul>';
   if (deltas.length > shown.length) {
-    h += `<p class="change-more"><a href="${esc(buildHash('compare'))}">`
-      + `${deltas.length - shown.length} more changes in the snapshot comparison →</a></p>`;
+    h += `<p class="change-more"><a href="${esc(buildHash('rbqm'))}">`
+      + `${deltas.length - shown.length} more changes — open the RBQM overview →</a></p>`;
   }
+  return h;
+}
+
+/**
+ * The compact snapshot record: what this snapshot is, in the fields a reader
+ * needs before trusting a number. The full manifest stays one click away in the
+ * masthead's provenance panel.
+ */
+export function buildSnapshotSummary(o = {}) {
+  const s = o.currentSnapshot || {};
+  const fields = [
+    ['Snapshot', s.snapshot_id || '—', 'mono'],
+    ['Input data', s.input_data_version || '—', 'mono'],
+    ['Package snapshot', s.package_snapshot || '—', 'mono'],
+    ['Pipeline run', o.pipelineStatus || 'unknown', ''],
+    ['Packages pinned', o.packageCount ? String(o.packageCount) : 'no manifest.csv', ''],
+    ['Published snapshots', String(o.snapshotCount || 0), 'num'],
+  ];
+  let h = '<dl class="snap-grid">';
+  for (const [label, value, cls] of fields) {
+    h += '<div class="snap-field">';
+    h += `<dt class="snap-label">${esc(label)}</dt>`;
+    h += `<dd class="snap-value ${cls}">${esc(String(value))}</dd>`;
+    h += '</div>';
+  }
+  h += '</dl>';
   return h;
 }
 
 /**
  * The Overview.
  * @param {object} o { summary, cards, deltas, metrics, groups, prevSnapshot,
- *                     currentSnapshot, domains, statusCounts }
+ *                     currentSnapshot, domains, pipelineStatus, packageCount,
+ *                     snapshotCount }
  */
 export function buildOverview(o) {
   const domainOf = (key) => (o.domains || []).find((d) => d.key === key);
@@ -61,6 +94,18 @@ export function buildOverview(o) {
     h += `<a class="section-link" href="${esc(buildHash('rbqm'))}">open domain →</a>`;
     h += '</div>';
     h += buildFlagTiles(o.summary);
+  }
+
+  // ── Since previous snapshot ──────────────────────────────────────────────
+  if (o.prevSnapshot) {
+    h += '<div class="section-head">';
+    h += `<h2 class="section-title">Since <span class="mono">${esc(o.prevSnapshot.snapshot_id)}</span></h2>`;
+    h += `<a class="section-link" href="${esc(buildHash('rbqm'))}">open the overview table →</a>`;
+    h += '</div>';
+    h += `<p class="section-note">Flag level changes at the ${esc(String(o.summary?.groupLevel || 'Site').toLowerCase())} level, `
+      + `<span class="mono">${esc(o.prevSnapshot.input_data_version || o.prevSnapshot.snapshot_id)}</span> → `
+      + `<span class="mono">${esc(o.currentSnapshot?.input_data_version || o.currentSnapshot?.snapshot_id || 'current')}</span>.</p>`;
+    h += buildChangeList(o.deltas, { metrics: o.metrics, groups: o.groups });
   }
 
   // ── Safety headline ──────────────────────────────────────────────────────
@@ -84,17 +129,11 @@ export function buildOverview(o) {
     }
   }
 
-  // ── Since previous snapshot ──────────────────────────────────────────────
-  if (o.prevSnapshot) {
-    h += '<div class="section-head">';
-    h += `<h2 class="section-title">Since <span class="mono">${esc(o.prevSnapshot.snapshot_id)}</span></h2>`;
-    h += `<a class="section-link" href="${esc(buildHash('compare', [], { from: o.prevSnapshot.snapshot_id, to: o.currentSnapshot?.snapshot_id }))}">compare snapshots →</a>`;
-    h += '</div>';
-    h += `<p class="section-note">Flag level changes at the ${esc(String(o.summary?.groupLevel || 'Site').toLowerCase())} level, `
-      + `<span class="mono">${esc(o.prevSnapshot.input_data_version || o.prevSnapshot.snapshot_id)}</span> → `
-      + `<span class="mono">${esc(o.currentSnapshot?.input_data_version || o.currentSnapshot?.snapshot_id || 'current')}</span>.</p>`;
-    h += buildChangeList(o.deltas, { metrics: o.metrics, groups: o.groups });
-  }
+  // ── Snapshot record ──────────────────────────────────────────────────────
+  h += '<div class="section-head">';
+  h += '<h2 class="section-title">This snapshot <span class="section-kicker">provenance</span></h2>';
+  h += '</div>';
+  h += buildSnapshotSummary(o);
 
   h += '</section>';
   return h;

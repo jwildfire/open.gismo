@@ -1,10 +1,13 @@
 /**
- * Global chrome: the espresso study masthead (Direction C).
+ * Global chrome: the study masthead.
  *
- * Holds study identity, the snapshot timeline (one dot per published pipeline
- * run — picking one re-points the whole app at that snapshot tree) and the
- * provenance chip, the signature component that expands into the snapshot's
- * reproducibility record.
+ * One dense espresso row — study title, the facts inline, the snapshot timeline
+ * and the provenance chip — sitting above the view, to the right of the
+ * sidebar. It is deliberately not a hero: the reader came for the data, and the
+ * vertical budget belongs to the data.
+ *
+ * The provenance chip is the signature component: collapsed it names the
+ * snapshot, expanded it is the snapshot's whole reproducibility record.
  */
 
 import { esc } from './utils.js';
@@ -32,13 +35,14 @@ export function shortSnapshotId(id) {
 }
 
 /**
- * The snapshot timeline — one dot per snapshots.json entry, oldest first, the
- * current context highlighted. Each dot is a real button so it is tabbable and
- * carries a text label; `aria-current="true"` marks the active snapshot.
+ * The snapshot timeline — one dot per snapshots.json entry, oldest first, laid
+ * out inline in the masthead row. Each dot is a real button so it is tabbable
+ * and carries a text label; the full date, input data version and current-ness
+ * ride in the accessible name rather than taking horizontal room.
  */
 export function buildTimeline(snapshots, currentId) {
   if (!snapshots || snapshots.length === 0) {
-    return '<div class="timeline timeline-empty">Single snapshot · no history published</div>';
+    return '<div class="timeline timeline-empty">Single snapshot</div>';
   }
   const latest = snapshots[snapshots.length - 1]?.snapshot_id;
   let h = '<div class="timeline" role="group" aria-label="Snapshot timeline">';
@@ -46,14 +50,13 @@ export function buildTimeline(snapshots, currentId) {
     const active = s.snapshot_id === currentId;
     const isLatest = s.snapshot_id === latest;
     if (i > 0) h += '<span class="timeline-rule" aria-hidden="true"></span>';
-    const label = `${snapshotDate(s.created_at)}${isLatest ? ' · current' : ''}`;
     const aria = `Snapshot ${s.snapshot_id}, ${snapshotDateTime(s.created_at)}, input data ${s.input_data_version || 'unknown'}${isLatest ? ', current snapshot' : ''}`;
     h += `<button type="button" class="timeline-dot${active ? ' is-active' : ''}" `
       + `data-snapshot="${esc(s.snapshot_id)}" ${active ? 'aria-current="true" ' : ''}`
       + `aria-label="${esc(aria)}" title="${esc(aria)}">`
       + '<span class="timeline-mark" aria-hidden="true"></span>'
-      + `<span class="timeline-label">${esc(label)}</span>`
-      + `<span class="timeline-id">${esc(s.snapshot_id)}</span>`
+      + `<span class="timeline-label mono">${esc(s.snapshot_id)}</span>`
+      + (isLatest ? '<span class="timeline-current">current</span>' : '')
       + '</button>';
   });
   h += '</div>';
@@ -86,7 +89,7 @@ export function buildProvenanceChip(snapshot, pipelineStatus) {
  * Provenance panel — the expanded reproducibility record: snapshot identity,
  * input data version, package snapshot, and the pinned manifest rows.
  */
-export function buildProvenancePanel(snapshot, manifestRows, pipelineStatus) {
+export function buildProvenancePanel(snapshot, manifestRows, pipelineStatus, config) {
   const rows = Array.isArray(manifestRows) ? manifestRows : [];
   const s = snapshot || {};
   let h = '<div id="provPanel" class="prov-panel" hidden>';
@@ -98,6 +101,7 @@ export function buildProvenancePanel(snapshot, manifestRows, pipelineStatus) {
   h += provField('Package snapshot', s.package_snapshot || '—', 'mono');
   h += provField('Pipeline run', pipelineStatus || 'unknown', '');
   h += provField('Packages', rows.length ? `${rows.length} pinned` : 'no manifest.csv', '');
+  if (config?.study?.source) h += provField('Source data', config.study.source, '');
   h += '</div>';
 
   if (rows.length) {
@@ -130,18 +134,15 @@ function provField(label, value, cls) {
     + '</div>';
 }
 
-/** The one-line study subtitle: synthetic-data disclaimer plus study facts. */
-export function buildSubtitle(config, facts) {
-  const bits = [];
-  if (config?.study?.synthetic) bits.push('Synthetic study — no real participant data');
-  if (config?.study?.source) bits.push(esc(config.study.source));
-  bits.push('published as static files by the open.gismo pipeline');
-  return bits.join(' · ');
-}
-
-/** The facts strip under the study title. */
+/**
+ * The inline facts strip: the synthetic-data disclaimer first (it is a claim
+ * about the data, so it leads), then phase, enrolment, sites, indication.
+ */
 export function buildFacts(config, facts) {
   const bits = [];
+  if (config?.study?.synthetic) {
+    bits.push('<span class="fact-flag">Synthetic study — no real participant data</span>');
+  }
   if (config?.study?.phase) bits.push(esc(config.study.phase));
   else if (facts?.phase) bits.push(esc(facts.phase));
   if (facts?.participants) {
@@ -155,23 +156,23 @@ export function buildFacts(config, facts) {
 }
 
 /**
- * Full masthead markup.
+ * Full masthead markup: one row, plus the provenance panel it can open.
  * @param {object} o { config, facts, snapshots, currentId, snapshot, manifestRows, pipelineStatus }
  */
 export function buildMasthead(o) {
   const title = o.config?.study?.label || o.config?.identity?.title || 'Study';
   let h = '<div class="masthead-inner">';
-  h += '<div class="masthead-top">';
-  h += `<a class="wordmark" href="#/overview">open.<span class="wordmark-accent">gismo</span></a>`;
-  h += `<div class="masthead-note">${buildSubtitle(o.config, o.facts)}</div>`;
-  h += buildProvenanceChip(o.snapshot, o.pipelineStatus);
-  h += '</div>';
+  h += '<div class="masthead-row">';
   h += `<h1 class="study-title">${esc(title)}</h1>`;
   const facts = buildFacts(o.config, o.facts);
   if (facts) h += `<div class="study-facts">${facts}</div>`;
+  h += '<div class="masthead-aside">';
   h += buildTimeline(o.snapshots, o.currentId);
+  h += buildProvenanceChip(o.snapshot, o.pipelineStatus);
   h += '</div>';
-  h += buildProvenancePanel(o.snapshot, o.manifestRows, o.pipelineStatus);
+  h += '</div>';
+  h += '</div>';
+  h += buildProvenancePanel(o.snapshot, o.manifestRows, o.pipelineStatus, o.config);
   return h;
 }
 
