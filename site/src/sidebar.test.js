@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   sidebarItems, buildSidebar, wireSidebar, applyCollapsed, railMark,
-  readCollapsed, writeCollapsed, SIDEBAR_STORAGE_KEY,
+  markActive, sidebarSignature, readCollapsed, writeCollapsed, SIDEBAR_STORAGE_KEY,
 } from './sidebar.js';
 
 const DOMAINS = [
@@ -119,6 +119,41 @@ describe('applyCollapsed', () => {
     expect(el.dataset.collapsed).toBe('false');
     expect(el.querySelector('#sidebarToggle').getAttribute('aria-expanded')).toBe('true');
     expect(el.querySelector('.sidebar-toggle-mark').textContent).toBe('«');
+  });
+});
+
+describe('markActive', () => {
+  it('moves the active marker without rebuilding the nav', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS), 'overview'));
+    const before = el.querySelector("[data-view='rbqm']");
+    markActive(el, 'rbqm');
+    expect(el.querySelector("[data-view='rbqm']")).toBe(before);   // same node
+    expect(before.getAttribute('aria-current')).toBe('page');
+    expect(before.classList.contains('is-active')).toBe(true);
+    expect(el.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
+
+  it('clears the previous marker', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS), 'overview'));
+    markActive(el, 'safety');
+    const prev = el.querySelector("[data-view='overview']");
+    expect(prev.hasAttribute('aria-current')).toBe(false);
+    expect(prev.classList.contains('is-active')).toBe(false);
+  });
+
+  it('leaves nothing marked for a view that is not a section', () => {
+    const el = mount(buildSidebar(sidebarItems(DOMAINS), 'overview'));
+    markActive(el, 'nonsense');
+    expect(el.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
+  });
+});
+
+describe('sidebarSignature', () => {
+  it('changes only when the item set does', () => {
+    const a = sidebarSignature(sidebarItems(DOMAINS));
+    expect(sidebarSignature(sidebarItems([...DOMAINS].reverse()))).toBe(a);
+    expect(sidebarSignature(sidebarItems([...DOMAINS, { key: 'qtl', label: 'QTL' }]))).not.toBe(a);
+    expect(sidebarSignature([])).toBe('');
   });
 });
 

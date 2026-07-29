@@ -27,6 +27,7 @@ import { buildMasthead, wireMasthead } from './masthead.js';
 import { buildExplorerNav, buildExplorerToolbar } from './domainnav.js';
 import {
   buildSidebar, sidebarItems, wireSidebar, readCollapsed, applyCollapsed,
+  markActive, sidebarSignature,
 } from './sidebar.js';
 import { parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot } from './router.js';
 import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from './flags.js';
@@ -52,6 +53,7 @@ const state = {
   workflows: null,
   bundles: new Map(),   // snapshotId -> loaded snapshot data
   renderedSnapshot: null,
+  renderedSidebar: null,
 };
 
 const els = {};
@@ -120,13 +122,18 @@ function renderMasthead(bundle) {
 }
 
 function renderSidebar() {
-  els.sidebar.innerHTML = buildSidebar(
-    sidebarItems(state.config?.domains || []),
-    state.route.view,
-    state.sidebarCollapsed,
-  );
-  applyCollapsed(els.sidebar, state.sidebarCollapsed);
-  wireSidebar(els.sidebar, (collapsed) => { state.sidebarCollapsed = collapsed; });
+  const items = sidebarItems(state.config?.domains || []);
+  const signature = sidebarSignature(items);
+  // Rebuilt only when the study config changes what the nav contains; every
+  // other navigation just moves the active marker, so focus survives it.
+  if (state.renderedSidebar !== signature) {
+    els.sidebar.innerHTML = buildSidebar(items, state.route.view, state.sidebarCollapsed);
+    applyCollapsed(els.sidebar, state.sidebarCollapsed);
+    wireSidebar(els.sidebar, (collapsed) => { state.sidebarCollapsed = collapsed; });
+    state.renderedSidebar = signature;
+  } else {
+    markActive(els.sidebar, state.route.view);
+  }
   decorateLinks(els.sidebar);
 }
 

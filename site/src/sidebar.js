@@ -115,6 +115,29 @@ export function applyCollapsed(root, collapsed) {
 }
 
 /**
+ * Move the active marker without rebuilding the nav.
+ *
+ * Navigation happens on every route change, and rebuilding the sidebar each
+ * time would drop keyboard focus off the link the reader just activated. The
+ * item set only changes when the study config does, so the common case is this:
+ * repaint two attributes and a class.
+ */
+export function markActive(root, activeView) {
+  if (!root) return;
+  root.querySelectorAll('.sidebar-link').forEach((a) => {
+    const active = a.dataset.view === activeView;
+    a.classList.toggle('is-active', active);
+    if (active) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+}
+
+/** The rendered item set, so the caller can tell a repaint from a rebuild. */
+export function sidebarSignature(items) {
+  return (items || []).map((i) => `${i.key}:${i.label}`).join('|');
+}
+
+/**
  * Wire the collapse toggle. Returns the current state getter so the caller can
  * keep re-renders in step without owning the storage key.
  *
