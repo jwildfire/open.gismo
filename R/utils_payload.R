@@ -248,14 +248,14 @@ og_write_reports_json <- function(project_dir) {
   modules_dir <- file.path(paths$output, "4_modules")
 
   reports <- list()
-  for (id in c("report_kri_site", "report_kri_country")) {
+  for (id in .og_module_ids(paths$root)) {
     report_dir <- file.path(modules_dir, id)
     htmls <- if (dir.exists(report_dir)) {
       sort(list.files(report_dir, pattern = "\\.html$"))
     } else {
       character(0)
     }
-    group_level <- if (grepl("country", id)) "Country" else "Site"
+    group_level <- .og_module_group_level(id)
     title <- .og_module_title(paths$root, id, group_level)
     for (f in htmls) {
       reports[[length(reports) + 1L]] <- list(
@@ -287,6 +287,46 @@ og_write_reports_json <- function(project_dir) {
   dir.create(modules_dir, showWarnings = FALSE, recursive = TRUE)
   writeLines(json, file.path(modules_dir, "reports.json"))
   invisible(payload)
+}
+
+#' The report modules this project defines
+#'
+#' Read from `workflows/4_modules/*.yaml` rather than hard-coded, so a study
+#' that snapshots another package's report module — gsm.qtl's QTL report, say —
+#' gets it listed in `reports.json` without a change here. Falls back to the two
+#' gsm.kri reports when the project has no module workflows to read.
+#' @keywords internal
+.og_module_ids <- function(root) {
+  dir <- file.path(root, "workflows", "4_modules")
+  yamls <- if (dir.exists(dir)) {
+    sort(list.files(dir, pattern = "\\.ya?ml$", full.names = TRUE))
+  } else {
+    character(0)
+  }
+  ids <- vapply(
+    yamls,
+    function(f) {
+      meta <- tryCatch(og_read_yaml(f)$meta, error = function(e) NULL)
+      id <- meta$ID %||% tools::file_path_sans_ext(basename(f))
+      as.character(id)[1]
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
+  ids <- unique(ids[nzchar(ids)])
+  if (!length(ids)) c("report_kri_site", "report_kri_country") else ids
+}
+
+#' The group level a report module reports at
+#'
+#' Named for the level, not defaulted to it: a study-level module (the QTLs)
+#' would otherwise be labelled a site report because "site" is absent from its
+#' name.
+#' @keywords internal
+.og_module_group_level <- function(id) {
+  if (grepl("country", id, ignore.case = TRUE)) return("Country")
+  if (grepl("site", id, ignore.case = TRUE)) return("Site")
+  "Study"
 }
 
 #' Human-readable title for a report module, from its workflow YAML meta

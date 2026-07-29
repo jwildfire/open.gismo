@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import {
-  parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot, VIEWS,
+  parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSnapshot, VIEWS, rbqmSection
 } from './router.js';
 
 describe('parseRoute', () => {
@@ -107,5 +107,29 @@ describe('router properties', () => {
       ),
       { numRuns: 100 },
     );
+  });
+});
+
+describe('rbqmSection', () => {
+  it('names the rbqm sub-pages that are not a report', () => {
+    expect(rbqmSection(parseRoute('#/rbqm/charts'))).toBe('charts');
+    expect(rbqmSection(parseRoute('#/rbqm/metrics'))).toBe('metrics');
+  });
+
+  it('is null for the domain home and for a report route', () => {
+    expect(rbqmSection(parseRoute('#/rbqm'))).toBeNull();
+    expect(rbqmSection(parseRoute('#/rbqm/report/report_qtl'))).toBeNull();
+  });
+
+  it('is null outside the rbqm view, whatever the params say', () => {
+    expect(rbqmSection(parseRoute('#/safety/charts'))).toBeNull();
+  });
+
+  it('ignores an unknown sub-page rather than rendering a blank one', () => {
+    expect(rbqmSection(parseRoute('#/rbqm/nonsense'))).toBeNull();
+  });
+
+  it('survives the snapshot query riding along', () => {
+    expect(rbqmSection(parseRoute('#/rbqm/charts?snapshot=ps-001'))).toBe('charts');
   });
 });

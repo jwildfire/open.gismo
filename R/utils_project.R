@@ -81,6 +81,7 @@ og_project_paths <- function(project_dir) {
     workflows = file.path(root, "workflows"),
     input = file.path(root, "input"),
     output = file.path(root, "output"),
+    history = file.path(root, "history"),
     readme = file.path(root, "README.md"),
     index_html = file.path(root, "index.html"),
     manifest = file.path(root, "manifest.csv"),

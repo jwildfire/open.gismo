@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   buildFlagTiles, buildFlagLegend, buildLevelSwitch, buildOverviewTable, plural,
   buildModuleReports, buildStaticCharts, buildRbqmView, buildModuleReportPage,
+  buildRiskSection, buildMetricList, buildChartsPage, buildMetricsPage,
 } from './rbqm.js';
 import { summarizeFlags } from './flags.js';
 
@@ -208,5 +209,107 @@ describe('buildModuleReportPage', () => {
 
   it('handles an unknown report id', () => {
     expect(mount(buildModuleReportPage(null)).textContent).toContain('Report not found');
+  });
+});
+
+/* ── the risk section: ranked table beside the funnel ─────────────────────── */
+
+const RISK_ROWS = [
+  {
+    id: 'SITE1', label: 'SITE1 · Smith', n: 28, score: 19.1, weight: 34, maxWeight: 178,
+    change: 7.9, previous: 11.2, previousDate: '2012-03-29', lowPrecision: false,
+    drivers: [{ abbreviation: 'SDSC', name: 'Study Discontinuation', level: 'red', flag: 2, weight: 32 }],
+  },
+  {
+    id: 'SITE2', label: 'SITE2', n: 2, score: 18.0, weight: 32, maxWeight: 178,
+    change: null, previous: null, previousDate: null, lowPrecision: true, drivers: [],
+  },
+  {
+    id: 'SITE3', label: 'SITE3', n: 40, score: 0, weight: 0, maxWeight: 178,
+    change: 0, previous: 0, previousDate: '2012-03-29', lowPrecision: false, drivers: [],
+  },
+];
+
+describe('buildRiskSection', () => {
+  it('puts the table and the funnel in one split, table first', () => {
+    const html = buildRiskSection({ riskRows: RISK_ROWS });
+    expect(html).toContain('risk-split-table');
+    expect(html).toContain('risk-split-funnel');
+    expect(html.indexOf('risk-split-table')).toBeLessThan(html.indexOf('risk-split-funnel'));
+  });
+
+  it('states the precision floor rather than applying it silently', () => {
+    const html = buildRiskSection({ riskRows: RISK_ROWS });
+    expect(html).toContain('dimmed and not ranked');
+    expect(html).toContain('our judgment');
+  });
+
+  it('says how many sites scored zero instead of pretending they are absent', () => {
+    expect(buildRiskSection({ riskRows: RISK_ROWS })).toContain('scored exactly zero');
+  });
+
+  it('names the funnel\'s approximation instead of implying a test', () => {
+    const html = buildRiskSection({ riskRows: RISK_ROWS });
+    expect(html).toContain('normal approximation');
+    expect(html).toContain('check on the ranking rather than a test');
+  });
+
+  it('renders with no scored sites at all', () => {
+    const html = buildRiskSection({ riskRows: [] });
+    expect(html).toContain('No site scored above zero');
+  });
+});
+
+describe('buildFlagTiles with movers', () => {
+  it('adds a movers tile only once there is a snapshot to have moved from', () => {
+    const summary = summarizeFlags(rows, 'Site');
+    expect(buildFlagTiles(summary)).not.toContain('Score movers');
+    expect(buildFlagTiles(summary, { movers: 7 })).toContain('Score movers');
+  });
+});
+
+describe('buildMetricList', () => {
+  const METRICS = [
+    {
+      MetricID: 'Analysis_kri0006', ID: 'kri0006', GroupLevel: 'Site', Abbreviation: 'SDSC',
+      Metric: 'Study Discontinuation Rate', Numerator: 'Subjects Discontinued',
+      Denominator: 'Enrolled Subjects', Threshold: '2,3', RiskScoreWeight: '0,16,32',
+    },
+    {
+      MetricID: 'Analysis_qtl0001', ID: 'qtl0001', GroupLevel: 'Study', Abbreviation: 'IE',
+      Metric: 'Inclusion/Exclusion Violation Rate', Numerator: 'Ineligible',
+      Denominator: 'Enrolled', Threshold: 'NA', nPropRate: '0.03', RiskScoreWeight: 'NA',
+    },
+  ];
+
+  it('lists every metric with its level and how it is judged', () => {
+    const html = buildMetricList(METRICS);
+    expect(html).toContain('Study Discontinuation Rate');
+    expect(html).toContain('kri0006');
+    expect(html).toContain('32');
+  });
+
+  it('falls back to the pre-specified rate when a metric has no threshold', () => {
+    const html = buildMetricList(METRICS);
+    expect(html).toContain('0.03');
+    // "NA" is absence, never a value to print.
+    expect(html).not.toMatch(/<td class="mono">NA<\/td>/);
+  });
+
+  it('renders an empty state rather than an empty table', () => {
+    expect(buildMetricList([])).toContain('No metric definitions');
+  });
+});
+
+describe('rbqm sub-pages', () => {
+  it('the charts page shows every export and links back', () => {
+    const html = buildChartsPage(MODULES, { key: 'rbqm', label: 'RBQM' });
+    expect(html).toContain('Metric charts');
+    expect(html).toContain('#/rbqm');
+  });
+
+  it('the metrics page shows the definitions', () => {
+    const html = buildMetricsPage([{ MetricID: 'Analysis_kri0001', Metric: 'AE Rate' }], { key: 'rbqm', label: 'RBQM' });
+    expect(html).toContain('AE Rate');
   });
 });

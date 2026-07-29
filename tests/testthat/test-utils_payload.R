@@ -201,3 +201,82 @@ test_that("og_write_reports_json follows the reports.json contract", {
   expect_equal(chart$title, "Adverse Event Rate")
   expect_equal(chart$png, "output/4_modules/static/kri0001.png")
 })
+
+# ---------------------------------------------------------------------------
+# Report modules beyond the two KRI reports
+# ---------------------------------------------------------------------------
+
+test_that(".og_module_ids reads the module ids from the project's workflows", {
+  proj <- withr::local_tempdir()
+  wf <- file.path(proj, "workflows", "4_modules")
+  dir.create(wf, recursive = TRUE)
+  writeLines(
+    c("meta:", "  Type: Report", "  ID: report_qtl", "  Name: QTL Report"),
+    file.path(wf, "report_qtl.yaml")
+  )
+  writeLines(
+    c("meta:", "  Type: Report", "  ID: report_kri_site", "  Name: Site KRIs"),
+    file.path(wf, "report_kri_site.yaml")
+  )
+  expect_setequal(.og_module_ids(proj), c("report_qtl", "report_kri_site"))
+})
+
+test_that(".og_module_ids falls back to the two KRI reports with no workflows", {
+  proj <- withr::local_tempdir()
+  expect_equal(.og_module_ids(proj), c("report_kri_site", "report_kri_country"))
+})
+
+test_that(".og_module_group_level reads Study/Site/Country from the module id", {
+  expect_equal(.og_module_group_level("report_kri_country"), "Country")
+  expect_equal(.og_module_group_level("report_kri_site"), "Site")
+  # A study-level module (the QTLs) is neither, and must not be mislabelled as
+  # a site report just because "site" is not in its name.
+  expect_equal(.og_module_group_level("report_qtl"), "Study")
+})
+
+test_that("og_write_reports_json lists every module that produced HTML", {
+  proj <- withr::local_tempdir()
+  wf <- file.path(proj, "workflows", "4_modules")
+  dir.create(wf, recursive = TRUE)
+  writeLines(
+    c("meta:", "  Type: Report", "  ID: report_qtl", "  Name: QTL Report"),
+    file.path(wf, "report_qtl.yaml")
+  )
+  out <- file.path(proj, "output", "4_modules", "report_qtl")
+  dir.create(out, recursive = TRUE)
+  writeLines("<html></html>", file.path(out, "report_qtl.html"))
+
+  payload <- og_write_reports_json(proj)
+  expect_length(payload$reports, 1L)
+  expect_equal(payload$reports[[1]]$id, "report_qtl")
+  expect_equal(payload$reports[[1]]$title, "QTL Report")
+  expect_equal(payload$reports[[1]]$group_level, "Study")
+  expect_equal(payload$reports[[1]]$html, "output/4_modules/report_qtl/report_qtl.html")
+})
+
+test_that(".og_move_report_html collects reports written outside the project root", {
+  proj <- withr::local_tempdir()
+  paths <- og_project_paths(proj)
+  dir.create(paths$root, showWarnings = FALSE, recursive = TRUE)
+  # gsm.kri's KRI modules render into the working directory ...
+  writeLines("<html></html>", file.path(paths$root, "kri_report_Site_x.html"))
+  writeLines("<html></html>", file.path(paths$root, "kri_report_Country_x.html"))
+  # ... while gsm.qtl's RenderRmd writes into outputs/{SnapshotDate}/.
+  qtl_dir <- file.path(paths$root, "outputs", "2012-03-29")
+  dir.create(qtl_dir, recursive = TRUE)
+  writeLines("<html></html>", file.path(qtl_dir, "report_qtl.html"))
+
+  n <- .og_move_report_html(paths)
+  expect_equal(n, 3L)
+  expect_true(file.exists(file.path(
+    paths$output, "4_modules", "report_kri_site", "kri_report_Site_x.html"
+  )))
+  expect_true(file.exists(file.path(
+    paths$output, "4_modules", "report_kri_country", "kri_report_Country_x.html"
+  )))
+  expect_true(file.exists(file.path(
+    paths$output, "4_modules", "report_qtl", "report_qtl.html"
+  )))
+  # The scratch directory the module wrote into does not survive the run.
+  expect_false(dir.exists(file.path(paths$root, "outputs")))
+})

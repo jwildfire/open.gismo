@@ -76,6 +76,15 @@ export function rbqmReportId(route) {
   return route.params[1] || null;
 }
 
+/** RBQM sub-pages that are not a report: the chart index and the metric list. */
+export const RBQM_SECTIONS = ['charts', 'metrics'];
+
+/** The rbqm sub-page a route points at, or null for the domain home. */
+export function rbqmSection(route) {
+  if (route.view !== 'rbqm') return null;
+  return RBQM_SECTIONS.includes(route.params[0]) ? route.params[0] : null;
+}
+
 /**
  * Rewrite a route's snapshot query without touching the rest of it — used when
  * the timeline dot changes while a deep view is open.
