@@ -57,3 +57,36 @@ describe('domainContents', () => {
     expect(domainContents(null, BUNDLE)).toEqual({});
   });
 });
+
+describe('safetyContents — participant metrics (hub#138)', () => {
+  const BUNDLE = {
+    cards: [{ id: 'hep_explorer', title: 'Hepatic Safety Explorer', dataLabel: 'LB' }],
+    reporting: {
+      metrics: [
+        { ID: 'saf0001', GroupLevel: 'Subject', Metric: "Hy's Law Candidate (Subject)", Abbreviation: 'HYLAW' },
+        { ID: 'kri0001', GroupLevel: 'Site', Metric: 'Adverse Event Rate', Abbreviation: 'AE' },
+      ],
+    },
+  };
+  const DOMAINS = [{ key: 'safety', label: 'Safety' }];
+
+  it('nests participant metrics under Safety, above the charts', () => {
+    const out = domainContents(DOMAINS, BUNDLE);
+    expect(out.safety.map((e) => e.key)).toEqual(['saf0001', 'hep_explorer']);
+  });
+
+  it('links each metric to its own page', () => {
+    const out = domainContents(DOMAINS, BUNDLE);
+    expect(out.safety[0].href).toBe('#/safety/metric/saf0001');
+  });
+
+  it('never nests a site-level metric under Safety', () => {
+    const out = domainContents(DOMAINS, BUNDLE);
+    expect(out.safety.map((e) => e.key)).not.toContain('kri0001');
+  });
+
+  it('still lists charts when a snapshot has no participant metrics', () => {
+    const out = domainContents(DOMAINS, { cards: BUNDLE.cards, reporting: { metrics: [] } });
+    expect(out.safety.map((e) => e.key)).toEqual(['hep_explorer']);
+  });
+});

@@ -85,12 +85,33 @@ export async function loadReports() {
   return res.json();
 }
 
-/** The safety domain's rendered chart manifest (3_reports phase). */
-export async function loadSafetyReports() {
-  const res = await fetch(withBase('output/3_reports/reports.json'));
-  if (!res.ok) throw new Error('No safety chart data');
-  return res.json();
+/**
+ * Paths the safety domain's rendered chart manifest has lived at, newest first.
+ *
+ * The safety chart workflows moved from a `3_reports` phase directory into the
+ * standard `4_modules` (hub#136), and their manifest moved with them — to
+ * `charts.json`, beside og_run's own `reports.json` rather than on top of it.
+ * Snapshots are immutable once published, so trees written before that rename
+ * still carry the old path and have to keep rendering.
+ */
+export const SAFETY_CHART_MANIFESTS = [
+  'output/4_modules/charts.json',
+  'output/3_reports/reports.json',
+];
+
+/** The safety domain's rendered chart manifest, from whichever path exists. */
+export async function loadSafetyCharts(snapshotId) {
+  for (const path of SAFETY_CHART_MANIFESTS) {
+    try {
+      const res = await fetch(withBase(path, snapshotId));
+      if (res.ok) return res.json();
+    } catch { /* try the next path */ }
+  }
+  throw new Error('No safety chart data');
 }
+
+/** @deprecated Use {@link loadSafetyCharts}; kept for the current-tree caller. */
+export const loadSafetyReports = loadSafetyCharts;
 
 /** The published snapshot index — study-level, always at the root. */
 export async function loadSnapshots() {

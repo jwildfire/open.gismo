@@ -92,3 +92,48 @@ describe('workflow phase grouping', () => {
     expect(grouped[2]).toHaveLength(3);
   });
 });
+
+// ── loadSafetyCharts tests (hub#136 — the 3_reports -> 4_modules rename) ─────
+
+import { loadSafetyCharts, SAFETY_CHART_MANIFESTS } from './data.js';
+
+describe('loadSafetyCharts', () => {
+  const MANIFEST = { reports: [{ id: 'hep_explorer', status: 'completed' }] };
+
+  it('prefers the current path, output/4_modules/charts.json', async () => {
+    const seen = [];
+    globalThis.fetch = async (url) => {
+      seen.push(url);
+      return { ok: url.includes('4_modules/charts.json'), json: async () => MANIFEST };
+    };
+    expect(await loadSafetyCharts()).toEqual(MANIFEST);
+    // The legacy path is never requested when the current one answers.
+    expect(seen).toEqual(['output/4_modules/charts.json']);
+  });
+
+  it('falls back to output/3_reports/reports.json for pre-rename snapshots', async () => {
+    globalThis.fetch = async (url) => ({
+      ok: url.includes('3_reports/reports.json'),
+      json: async () => MANIFEST,
+    });
+    expect(await loadSafetyCharts()).toEqual(MANIFEST);
+  });
+
+  it('keeps looking when an earlier path throws rather than 404s', async () => {
+    globalThis.fetch = async (url) => {
+      if (url.includes('4_modules')) throw new TypeError('network');
+      return { ok: true, json: async () => MANIFEST };
+    };
+    expect(await loadSafetyCharts()).toEqual(MANIFEST);
+  });
+
+  it('throws when no manifest path answers', async () => {
+    globalThis.fetch = async () => ({ ok: false, status: 404 });
+    await expect(loadSafetyCharts()).rejects.toThrow('No safety chart data');
+  });
+
+  it('lists the manifest paths newest first', () => {
+    expect(SAFETY_CHART_MANIFESTS[0]).toContain('4_modules');
+    expect(SAFETY_CHART_MANIFESTS.at(-1)).toContain('3_reports');
+  });
+});

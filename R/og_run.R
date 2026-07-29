@@ -205,6 +205,14 @@ og_run <- function(
     module_wf <- workr::MakeWorkflowList(
       strPath = file.path(paths$workflows, "4_modules")
     )
+    n_all <- length(module_wf)
+    module_wf <- .og_filter_active(.og_filter_reporting_modules(module_wf))
+    if (length(module_wf) < n_all && !quiet) {
+      say(sprintf(
+        "Skipping %d module workflow(s) og_run() does not own (meta Data, or Active: false)",
+        n_all - length(module_wf)
+      ))
+    }
     # Report modules write kri_report_*.html into the working directory;
     # run the phase from the project root so they land inside the project.
     old_wd <- setwd(paths$root)
@@ -864,6 +872,36 @@ og_run <- function(
   keep <- vapply(
     lWorkflows,
     function(wf) !isFALSE(wf$meta$Active),
+    logical(1)
+  )
+  lWorkflows[keep]
+}
+
+#' Keep only the `4_modules` workflows that read the reporting layer
+#'
+#' `4_modules` is the standard gsm phase directory for every
+#' `meta.Type: Report` workflow, so more than one lane can legitimately write
+#' into it: gsm.kri's KRI module reports read the reporting layer this phase is
+#' handed, while gsm.safety's chart workflows read a *mapped* data domain,
+#' which they name in `meta.Data`.
+#'
+#' [og_run()] is handed the reporting layer, not the mapped domains, so it can
+#' only run the former. This filter drops any module workflow that declares
+#' `meta.Data` — a workflow whose input og_run() cannot supply — leaving it for
+#' whichever lane owns that domain. Without the filter, a project mixing both
+#' kinds in `4_modules` would fail one workflow per chart on every run.
+#'
+#' This is the seam a follow-up can close: teaching phase 4 to pass the mapped
+#' domains alongside the reporting layer would let og_run() run both lanes and
+#' retire the separate chart runner.
+#' @keywords internal
+.og_filter_reporting_modules <- function(lWorkflows) {
+  keep <- vapply(
+    lWorkflows,
+    function(wf) {
+      strData <- wf$meta$Data
+      is.null(strData) || !any(nzchar(strData))
+    },
     logical(1)
   )
   lWorkflows[keep]
