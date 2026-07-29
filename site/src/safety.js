@@ -484,6 +484,31 @@ export function buildSafetyStudyBlock(o = {}) {
 }
 
 /**
+ * The queue narrowed to one metric.
+ *
+ * Filtering the findings is not enough: a row's `reds` and `score` are summed
+ * across every metric, so a page showing one metric has to recount them or it
+ * reports the whole study's reds as its own.
+ */
+export function queueForMetric(queue, metricId) {
+  const out = [];
+  for (const p of queue || []) {
+    const findings = (p.findings || []).filter((f) => f.metricId === metricId);
+    if (!findings.length) continue;
+    out.push({
+      ...p,
+      findings,
+      reds: findings.filter((f) => f.level === 'red').length,
+      score: findings.reduce(
+        (sum, f) => sum + (LEVEL_WEIGHT[f.level] || 0), 0,
+      ),
+      isNew: findings.some((f) => f.isNew),
+    });
+  }
+  return out.sort((a, b) => b.score - a.score || String(a.id).localeCompare(String(b.id)));
+}
+
+/**
  * A participant-metric page: what the metric measures, where its cut-points
  * come from, and every participant it flagged.
  *

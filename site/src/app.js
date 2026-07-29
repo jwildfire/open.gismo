@@ -37,7 +37,7 @@ import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from 
 import { chartCards, buildChartPage, mountChartFrame } from './gallery.js';
 import {
   parseCensus, reviewQueue, buildSafetyOverview, buildSafetyStudyBlock,
-  buildMetricPage, metricDetail,
+  buildMetricPage, metricDetail, queueForMetric,
 } from './safety.js';
 import {
   buildRbqmView, buildModuleReportPage, buildChartsPage, buildMetricsPage,
@@ -276,9 +276,7 @@ async function renderOverview(bundle) {
 async function renderSafety(bundle) {
   const metricId = safetyMetricId(state.route);
   if (metricId) {
-    const queue = (await participantQueue(bundle))
-      .map((p) => ({ ...p, findings: p.findings.filter((f) => f.metricId === metricId) }))
-      .filter((p) => p.findings.length);
+    const queue = queueForMetric(await participantQueue(bundle), metricId);
     els.view.innerHTML = buildMetricPage({
       metric: metricDetail(bundle.reporting.metrics, bundle.reporting.results, metricId),
       queue,

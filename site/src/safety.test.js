@@ -431,7 +431,7 @@ describe('buildSafetyStudyBlock', () => {
 
 /* ── the per-metric page (sidebar nesting target) ─────────────────────────── */
 
-import { buildMetricPage, metricDetail } from './safety.js';
+import { buildMetricPage, metricDetail, queueForMetric } from './safety.js';
 
 describe('metricDetail', () => {
   const RESULTS = [
@@ -479,5 +479,34 @@ describe('buildMetricPage', () => {
     const html = buildMetricPage({ metric: null });
     expect(html).toContain('Metric not found');
     expect(html).toContain('Back to the Safety overview');
+  });
+});
+
+describe('queueForMetric', () => {
+  const QUEUE = reviewQueue({
+    results: [
+      result('S1', 'Analysis_saf0001', 2),   // red on saf0001
+      result('S1', 'Analysis_saf0002', 2),   // red on saf0002
+      result('S2', 'Analysis_saf0002', 1),   // amber on saf0002 only
+    ],
+    metrics: METRICS,
+  });
+
+  it('keeps only the participants this metric flagged', () => {
+    expect(queueForMetric(QUEUE, 'saf0001').map((p) => p.id)).toEqual(['S1']);
+  });
+
+  it('recounts reds for the metric, not across every metric', () => {
+    // S1 is red on two metrics; on saf0001's page that is one red, not two.
+    expect(queueForMetric(QUEUE, 'saf0001')[0].reds).toBe(1);
+    expect(QUEUE.find((p) => p.id === 'S1').reds).toBe(2);
+  });
+
+  it('recounts the review score from the filtered findings', () => {
+    expect(queueForMetric(QUEUE, 'saf0002').find((p) => p.id === 'S2').score).toBe(4);
+  });
+
+  it('drops a participant with no finding on this metric', () => {
+    expect(queueForMetric(QUEUE, 'saf0001').map((p) => p.id)).not.toContain('S2');
   });
 });
