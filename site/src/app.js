@@ -32,7 +32,7 @@ import { parseRoute, buildHash, explorerTab, safetyChartId, rbqmReportId, withSn
 import { summarizeFlags, metricIndex, groupIndex, flagDeltas, studyFacts } from './flags.js';
 import { chartCards, buildGallery, buildChartPage, mountChartFrame } from './gallery.js';
 import { buildRbqmView, buildModuleReportPage } from './rbqm.js';
-import { groupOverviewInputs, mountGroupOverview, availableLevels } from './kritable.js';
+import { groupOverviewInputs, mountGroupOverview, canRender, availableLevels } from './kritable.js';
 import { buildOverview, overviewLoading } from './overview.js';
 import { buildPipeline } from './pipeline.js';
 import { buildPackagesTable } from './packages.js';
@@ -214,6 +214,9 @@ function renderRbqm(bundle) {
   const levels = bundle.levels?.length ? bundle.levels : ['Site'];
   if (!levels.includes(state.groupLevel)) state.groupLevel = levels[0];
   const inputs = groupOverviewInputs(bundle.reporting, { groupLevel: state.groupLevel });
+  // The widget throws rather than degrades on an incomplete input set, so the
+  // page decides up front whether it is showing a table or an empty state.
+  const renderable = canRender(inputs);
 
   const paint = (error) => {
     els.view.innerHTML = buildRbqmView({
@@ -224,7 +227,7 @@ function renderRbqm(bundle) {
       levels,
       groupCount: inputs.groupCount,
       metricCount: inputs.metricMetadata.length,
-      empty: !inputs.results.length,
+      empty: !renderable,
       error,
     });
     decorateLinks(els.view);
@@ -233,12 +236,13 @@ function renderRbqm(bundle) {
 
   // The widget mounts into the painted page, and remounts whenever the snapshot
   // or the group level changes.
-  const mount = els.view.querySelector('#kriTable');
-  const res = mountGroupOverview(mount, inputs, {
-    groupClickCallback: () => {},
-    metricClickCallback: () => {},
-  });
-  if (res.error) paint(res.error.message);
+  if (renderable) {
+    const res = mountGroupOverview(els.view.querySelector('#kriTable'), inputs, {
+      groupClickCallback: () => {},
+      metricClickCallback: () => {},
+    });
+    if (res.error) paint(res.error.message);
+  }
 
   els.view.querySelectorAll('[data-level]').forEach((btn) => {
     btn.addEventListener('click', () => {
