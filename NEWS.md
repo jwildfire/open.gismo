@@ -1,4 +1,11 @@
-# open.gismo (development version)
+<!--
+NEWS.md is the running release log and the draft of each release's notes
+(obot.agent/skills/rc-release-notes/SKILL.md): newest section first; unreleased
+work accumulates under a vX.Y.Z (Upcoming) heading that loses the suffix when
+the release is cut; the GitHub release publishes from the section verbatim.
+-->
+
+# open.gismo v0.2.0 (Upcoming)
 
 - **The snapshot date now comes from the data cut, not the clock.** `og_run()` stamped every snapshot with `Sys.Date()`, so two cuts of the same study run on the same day shared a date and nothing downstream could tell them apart. It now derives the date from the newest date in the project's raw input (override with `og_run(snapshot_date = ...)`), which is the point in study time the cut actually describes.
 - **Snapshot history accumulates, so change columns appear.** `og_run()` passed `Reporting_Results_Longitudinal = NULL`, so `gsm.reporting::CalculateChange()` returned every snapshot unchanged. Each run now archives its `Reporting_Results` under the project's `history/` and feeds the accumulated series back in, so `Reporting_Results` carries `Numerator_Change`, `Score_Change`, `Metric_Previous`, `SnapshotDate_Previous` and the rest from the second snapshot onward. Turn it off with `og_run(history = FALSE)`.
