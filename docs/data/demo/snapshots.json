@@ -1,0 +1,10 @@
+{
+  "snapshots": [
+    {
+      "snapshot_id": "ps-001",
+      "created_at": "2026-03-25T09:00:00Z",
+      "input_data_version": "Demo data cut",
+      "package_snapshot": "demo"
+    }
+  ]
+}

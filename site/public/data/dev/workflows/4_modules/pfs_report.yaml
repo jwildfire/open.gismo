@@ -1,0 +1,37 @@
+meta:
+  Type: Report
+  ID: pfs_report
+  Output: html
+  Name: Progression-Free Survival Report
+  Description: A report summarizing and detailing progression-free survival status.
+spec:
+  Mapped_Endpoints_Flags:
+    _all:
+  Mapped_Endpoints_Missing:
+    _all:
+  Mapped_Endpoints_FlagSpecs:
+    _all:
+steps:
+  - output: lSetup
+    name: gsm.endpoints::pfs_report_setup
+    params:
+      dfFlags_data: Mapped_Endpoints_Flags
+      dfMissing_scans_data: Mapped_Endpoints_Missing
+      flag_specs: Mapped_Endpoints_FlagSpecs
+  - output: lCharts
+    name: gsm.endpoints::pfs_report_visualizations
+    params:
+      dfFlags_data: Mapped_Endpoints_Flags
+      lSetup: lSetup
+      lMetric: ~
+      dfBounds: ~
+  - output: report_path
+    name: gsm.endpoints::create_report
+    params:
+      lSetup: lSetup
+      lCharts: lCharts
+      report_type: pfs
+      lglQuiet: TRUE
+      strOutputDir: strOutputDir
+
+

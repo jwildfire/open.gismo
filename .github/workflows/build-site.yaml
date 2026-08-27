@@ -1,0 +1,45 @@
+name: Build and Deploy Site
+
+"on":
+  push:
+    branches:
+      - demo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy-demo:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout demo branch
+        uses: actions/checkout@v4
+        with:
+          ref: demo
+          fetch-depth: 1
+
+      - name: Validate demo site artifacts
+        run: |
+          test -f index.html
+          test -f _index.json
+          test -d workflows
+          test -d output
+          test -f manifest.csv
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

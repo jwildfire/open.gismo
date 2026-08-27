@@ -1,0 +1,34 @@
+meta:
+  Type: Reporting
+  ID: endMetrics
+  Description: |
+    This workflow returns metric metadata with one row per metric per metric subcategory and depends
+    on the output of `[gsm.reporting::MakeMetrics()]`.
+  Priority: 2
+spec:
+  Reporting_Metrics:
+    _all:
+steps:
+  # Restructure nested flag specifications as a table.
+  - output: dfFlagSpecs
+    name: gsm.endpoints::workflow_summary
+  - output: dfEncodings
+    name: dplyr::select
+    params:
+      .data: dfFlagSpecs
+      MetricID: MetricID
+      MetricEncoding: MetricEncoding
+      MetricSubcategory: MetricSubcategory
+      ScoreEncoding: ScoreEncoding
+      ScoreAbbreviation: ScoreAbbreviation
+
+  # Join [ Reporting_Metrics ] onto flag specifications.
+  - output: Reporting_endMetrics
+    name: dplyr::inner_join
+    params:
+      x: Reporting_Metrics
+      'y': dfEncodings
+      by:
+        - MetricID
+
+

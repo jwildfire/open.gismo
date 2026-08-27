@@ -359,14 +359,14 @@ Creates a new Project Snapshot with input data.
 
 #### Action: `build-site.yaml`
 
-Extended version of `workr/.github/workflows/site-build.yaml` that also collects Project Snapshot data.
+Deployment workflow for publishing the already-built `demo` branch to GitHub Pages.
 
 ```yaml
-# Additional steps beyond workr's site-build:
-#   1. For each ss-* branch, also fetch snapshots.json from the data branch
-#   2. For each project snapshot, fetch status.json
-#   3. Copy all data into docs/data/{branch}/
-#   4. Build the enhanced Vite app from open.gismo/site/
+# Steps:
+#   1. Checkout the demo branch explicitly
+#   2. Validate the required static site artifacts at the branch root
+#   3. Upload the demo branch root via the GitHub Pages artifact API
+#   4. Deploy that artifact to GitHub Pages
 ```
 
 ### Component 3: Web Front-end — Enhanced Vite SPA
@@ -893,7 +893,7 @@ The platform spans R, JavaScript, and GitHub Actions YAML. Each component uses i
 GitHub Actions workflows are tested manually and via integration:
 - **Manual testing:** Trigger each workflow via `workflow_dispatch` with test inputs.
 - **Integration testing:** Example projects serve as end-to-end test targets (Requirement 24.6). A successful pipeline run through `run-pipeline.yaml` that produces viewable output in the front-end validates the full stack.
-- **Smoke tests:** The `build-site.yaml` action should produce a valid `docs/` directory with `branches.json`, `_index.json` per branch, and all expected static files.
+- **Smoke tests:** The `build-site.yaml` action should validate a deployable `demo` branch root with `index.html`, `_index.json`, `workflows/`, `output/`, and other expected static files before publishing.
 
 ### Test Configuration
 

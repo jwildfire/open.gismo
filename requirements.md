@@ -195,11 +195,11 @@ open.gismo is an end-to-end analytics platform for running R workflows using the
 #### Acceptance Criteria
 
 1. THE Web_Frontend SHALL be built using Vite as a single-file HTML application using the vite-plugin-singlefile plugin.
-2. WHEN the site is built, THE Analytics_Engine SHALL collect workflow YAML files and manifest data from all matching Snapshot_Branches into a `data/` directory.
-3. WHEN the site is built, THE Analytics_Engine SHALL generate a `branches.json` file listing all discovered Snapshot_Branches.
-4. WHEN the site is built, THE Analytics_Engine SHALL generate an `_index.json` file per branch listing all workflow YAML file paths.
+2. WHEN the site is prepared for publishing, THE Analytics_Engine SHALL deploy the prebuilt static site directly from the `demo` branch root.
+3. BEFORE deployment, THE Analytics_Engine SHALL validate that the `demo` branch contains the required site artifacts, including `index.html`, `_index.json`, `workflows/`, `output/`, and `manifest.csv`.
+4. THE `demo` branch SHALL be treated as the canonical public demo payload for GitHub Pages publication.
 5. THE Analytics_Engine SHALL deploy the built site to GitHub Pages using the GitHub Pages artifact API.
-6. THE Analytics_Engine SHALL trigger site rebuilds on pushes to Snapshot_Branches and on a nightly schedule.
+6. THE Analytics_Engine SHALL trigger site deployment on pushes to the `demo` branch and by manual dispatch.
 
 ### Requirement 14: Platform — Modularity and Swappability
 

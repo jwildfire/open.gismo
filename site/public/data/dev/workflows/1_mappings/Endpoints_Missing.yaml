@@ -1,0 +1,41 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_Missing
+  Description: Missing Scan Data Mapping
+  Priority: 4
+spec:
+  Mapped_Endpoints_Summary:
+    _all:
+  Mapped_Endpoints_Response:
+    _all:
+  Mapped_Endpoints_StudyWindow:
+    _all:
+  Mapped_SUBJ:
+    studyid:
+      type: character
+    subjid:
+      type: character
+steps:
+  - output: Missing_Scans
+    name: gsm.endpoints::pfs_map_missing_scans
+    params:
+      resp_data: Mapped_Endpoints_Response
+      summary_data: Mapped_Endpoints_Summary
+      study_window: Mapped_Endpoints_StudyWindow
+      
+  # Subset on participants in [ Mapped_SUBJ ].
+  - output: select_subj
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT studyid, subjid FROM df"
+  - output: Mapped_Endpoints_Missing
+    name: dplyr::inner_join
+    params:
+      x: select_subj
+      'y': Missing_Scans
+      by:
+        - studyid
+        - subjid
+
+

@@ -1,0 +1,225 @@
+# Top-level object keys control color palette in reports (PFS-only) and should align with flagging
+# algorithm.
+green:
+
+  # ----
+  # Retention
+  # ----
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: Ongoing
+    MetricEncoding: 0
+    ScoreAbbreviation: ONGO
+    ScoreEncoding: 0
+    risk_level: No Risk
+    filter: "Reason == 'Ongoing'"
+    individual_color: "green3"
+    run: FALSE
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: Completed Study
+    MetricEncoding: 1
+    ScoreAbbreviation: EOS
+    ScoreEncoding: 4
+    risk_level: No Risk
+    filter: "Reason == 'Completed Study'"
+    individual_color: "green3"
+    run: FALSE
+
+  # ----
+  # Progression-free survival
+  # ----
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: No Risk # Compliant with PFS Endpoint
+    MetricEncoding: 0
+    ScoreAbbreviation: "" # CPLNT
+    ScoreEncoding: 0
+    filter: "TRUE"
+    risk_level: No Risk
+    individual_color: "green3"
+    run: TRUE
+
+orange:
+
+  # ----
+  # Progression-free survival
+  # ----
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: 1 missing/non-evaluable scan without PD/death
+    MetricEncoding: 1
+    ScoreAbbreviation: 1SCANW
+    ScoreEncoding: 0
+    filter: "miss_1_scan == TRUE"
+    risk_level: Low Risk
+    individual_color: orange
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: Baseline scan after randomization date
+    MetricEncoding: 2
+    ScoreAbbreviation: RNDBL
+    ScoreEncoding: 0
+    filter: "baseline_day > 1"
+    risk_level: Low Risk
+    individual_color: orange
+    run: TRUE
+
+red:
+
+  # ----
+  # Progression-free survival
+  # ----
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: Missing baseline scan
+    MetricEncoding: 3
+    ScoreAbbreviation: BSCAN
+    ScoreEncoding: 1
+    filter: "baseline_flag == TRUE"
+    risk_level: High Risk
+    individual_color: red
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: Last 2 or more missing/non-evaluable scans without PD/death
+    MetricEncoding: 4
+    ScoreAbbreviation: 2SCANW
+    ScoreEncoding: 2
+    filter: "miss_2_scans_no_pd_or_death == TRUE"
+    risk_level: High Risk
+    individual_color: red
+    run: TRUE
+
+black:
+
+  # ----
+  # Retention
+  # ----
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: "Death"
+    MetricEncoding: 2
+    ScoreAbbreviation: EOS
+    ScoreEncoding: 4
+    risk_level: Very High Risk # but not flagged by default
+    filter: "death == TRUE"
+    individual_color: black
+    run: FALSE
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: Lost to Follow-Up
+    MetricEncoding: 3
+    ScoreAbbreviation: LTFU
+    ScoreEncoding: 3
+    risk_level: Very High Risk
+    filter: "Reason == 'Lost to Follow-Up'"
+    individual_color: black
+    run: FALSE
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: Withdrew Consent
+    MetricEncoding: 4
+    ScoreAbbreviation: WD
+    ScoreEncoding: 1
+    filter: "Reason == 'Withdrew Consent'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: FALSE
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: "Study Discontinuation: Other"
+    MetricEncoding: 5
+    ScoreAbbreviation: EOS
+    ScoreEncoding: 4
+    filter: "Reason == 'Study Discontinuation: Other'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: FALSE
+
+  - MetricID: Analysis_end0001
+    MetricSubcategory: Potential Lost to Follow-Up
+    MetricEncoding: 6
+    ScoreAbbreviation: PLTFU
+    ScoreEncoding: 2
+    filter: "Reason == 'Potential Lost to Follow-Up'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: FALSE
+
+  # ----
+  # Progression-free survival
+  # ----
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: Missing baseline scan - 2 periods
+    MetricEncoding: 6
+    ScoreAbbreviation: BSCAN
+    ScoreEncoding: 1
+    filter: "missed_baseline_2_periods == TRUE"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: Last 2 or more missing/non-evaluable scans prior to PD/death
+    MetricEncoding: 7
+    ScoreAbbreviation: 2SCANP
+    ScoreEncoding: 3
+    filter: "miss_2_scans_before_pd_or_death == TRUE"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: New subsequent anticancer therapy initiated without PD/death
+    MetricEncoding: 8
+    ScoreAbbreviation: ISATW
+    ScoreEncoding: 4
+    filter: "anticnr_no_pd_or_death == TRUE"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: New subsequent anticancer therapy initiated prior to PD/death
+    MetricEncoding: 9
+    ScoreAbbreviation: ISATP
+    ScoreEncoding: 5
+    filter: "anticnr_before_pd_or_death == TRUE"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: "Premature discontinuation without PD/death: WD"
+    MetricEncoding: 10
+    ScoreAbbreviation: WD
+    ScoreEncoding: 6
+    filter: "eos_rea_no_pd_or_death == 'Withdrew Consent'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: "Premature discontinuation without PD/death: LTFU"
+    MetricEncoding: 11
+    ScoreAbbreviation: LTFU
+    ScoreEncoding: 7
+    filter: "eos_rea_no_pd_or_death == 'Lost to Follow-Up'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+  - MetricID: Analysis_end0002
+    MetricSubcategory: "Premature discontinuation without PD/death: Other"
+    MetricEncoding: 12
+    ScoreAbbreviation: EOS
+    ScoreEncoding: 8
+    filter: "eos_rea_no_pd_or_death == 'Study Discontinuation: Other'"
+    risk_level: Very High Risk
+    individual_color: black
+    run: TRUE
+
+

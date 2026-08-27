@@ -1,0 +1,7 @@
+"Study","Site","Country.GroupID","Country.Param","Country.Value","Country.GroupLevel"
+"Mapped_STUDY","Mapped_SITE",US,ParticipantCount,289,Country
+"Mapped_STUDY","Mapped_SITE",US,SiteCount,51,Country
+"Mapped_STUDY","Mapped_SITE",UK,ParticipantCount,230,Country
+"Mapped_STUDY","Mapped_SITE",UK,SiteCount,46,Country
+"Mapped_STUDY","Mapped_SITE",Japan,ParticipantCount,245,Country
+"Mapped_STUDY","Mapped_SITE",Japan,SiteCount,48,Country

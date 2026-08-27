@@ -1,0 +1,38 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_Flags
+  Description: Flags Data Mapping
+  Priority: 5
+spec:
+  Mapped_Endpoints_Missing:
+    _all:
+  Mapped_Endpoints_FlagSpecs:
+    _all:
+  Mapped_SUBJ:
+    studyid:
+      type: character
+    subjid:
+      type: character
+steps:
+  - output: Flag_Assignments
+    name: gsm.endpoints::pfs_map_flags
+    params:
+      missing_scans_data: Mapped_Endpoints_Missing
+      flag_specs: Mapped_Endpoints_FlagSpecs
+
+  # Subset on participants in [ Mapped_SUBJ ].
+  - output: select_subj
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT studyid, subjid FROM df"
+  - output: Mapped_Endpoints_Flags
+    name: dplyr::inner_join
+    params:
+      x: select_subj
+      'y': Flag_Assignments
+      by:
+        - studyid
+        - subjid
+
+

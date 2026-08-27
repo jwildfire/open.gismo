@@ -1,0 +1,10 @@
+meta:
+  Type: Standardize
+  ID: standardize
+  Description: Coerce GroupID to character across all analyzed metric results so site-level (numeric) and country-level (character) metrics can be row-bound by the reporting layer
+  Priority: 1
+steps:
+  - output: lAnalyzed
+    name: open.gismo::StandardizeResults
+    params:
+      lAnalyzed: lAnalyzed

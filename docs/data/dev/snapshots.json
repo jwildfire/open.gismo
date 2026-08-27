@@ -1,0 +1,10 @@
+{
+  "snapshots": [
+    {
+      "snapshot_id": "ps-001",
+      "created_at": "2026-03-25T13:00:00Z",
+      "input_data_version": "gsm.core example data",
+      "package_snapshot": "dev"
+    }
+  ]
+}

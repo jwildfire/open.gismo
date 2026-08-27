@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "ps-001",
+  "workflows": {
+    "Mapped_AE": {
+      "stdout": "Running workflow: AE (Mapped)\n  Step 1/1: = → Mapped_AE\n  ✓ Mapped_AE: 4 rows, 3 cols\nWorkflow AE completed successfully.",
+      "stderr": "",
+      "started_at": "2026-03-25T09:01:00Z",
+      "completed_at": "2026-03-25T09:01:45Z"
+    },
+    "Analysis_kri0001": {
+      "stdout": "Running workflow: kri0001 (Analysis)\n  Step 1/2: gsm.core::Input_Rate → Analysis_Input\n  ✓ Analysis_Input: 4 rows, 5 cols\n  Step 2/2: gsm.core::Summarize → Analysis_Summary\n  ✓ Analysis_Summary: 2 rows, 8 cols\nWorkflow kri0001 completed successfully.",
+      "stderr": "",
+      "started_at": "2026-03-25T09:01:46Z",
+      "completed_at": "2026-03-25T09:03:22Z"
+    }
+  }
+}

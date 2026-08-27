@@ -1,0 +1,20 @@
+meta:
+  file: study_window.yaml
+  data_entry_lag_days: 10
+  add_transition: TRUE # logical to add transition between phases
+  plfu_window:
+    did_not_end_therapy: 28 # 3-week visit interval + 7-day window
+    ended_therapy: 91 # 12-week visit interval + 7-day window
+
+steps:
+  - period: Phase 1
+    phase_duration_days: 365 # first year
+    scheduled_days: 42 # scan scheduled every 6 weeks
+    window_days: 7
+
+  - period: Phase 2
+    phase_duration_days: 0 # last phase should be 0 to account for all duration greater than previous steps
+    scheduled_days: 84 # scan scheduled every 12 weeks
+    window_days: 7
+
+

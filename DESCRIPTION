@@ -1,0 +1,55 @@
+Package: open.gismo
+Title: Open-Source Analytics Platform Powered by workr
+Version: 0.2.0
+Authors@R: c(
+    person(
+        "Jeremy",
+        "Wildfire",
+        email = "jeremy_wildfire@example.com",
+        role = c("aut", "cre")
+    )
+  )
+Description: A thin integration layer over {workr} that turns a project folder
+    of workflow and configuration YAML into an end-to-end analytics platform.
+    By default it runs local-first, entirely against a filesystem project
+    folder: the 'og_*' functions scaffold, validate, run, and explore the
+    {workr} pipeline while 'fs_lConfig()' backs it with local storage, so no
+    external services are required. A GitHub backbone — the 'gh_*' functions,
+    GitHub Actions for compute, and GitHub Pages for the front-end — remains
+    available as an optional lane for shared storage, deployment, and
+    publishing.
+License: MIT + file LICENSE
+URL: https://github.com/Gilead-BioStats/open.gismo
+BugReports: https://github.com/Gilead-BioStats/open.gismo/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    base64enc,
+    httr2,
+    jsonlite,
+    utils,
+    yaml
+Suggests:
+    testthat (>= 3.0.0),
+    hedgehog,
+    workr,
+    withr,
+    shiny,
+    bslib,
+    httpuv,
+    ggplot2,
+    gsm.core,
+    gsm.mapping,
+    gsm.kri,
+    gsm.reporting
+Remotes:
+    workr=Gilead-BioStats/workr@main,
+    gsm.core=Gilead-BioStats/gsm.core@main,
+    gsm.mapping=Gilead-BioStats/gsm.mapping@main,
+    gsm.kri=Gilead-BioStats/gsm.kri@main,
+    gsm.reporting=Gilead-BioStats/gsm.reporting@main
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.1

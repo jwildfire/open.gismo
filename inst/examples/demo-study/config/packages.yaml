@@ -1,0 +1,3 @@
+packages:
+  - Gilead-BioStats/gsm.mapping@main
+  - Gilead-BioStats/gsm.core@main

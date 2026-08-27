@@ -1,0 +1,172 @@
+name: Run Pipeline
+
+"on":
+  workflow_call:
+    inputs:
+      snapshot_branch:
+        description: 'Snapshot branch (ss-*) with package manifest and workflows'
+        required: true
+        type: string
+      snapshot_id:
+        description: 'Project Snapshot ID (or "new" to create one)'
+        required: false
+        type: string
+        default: 'new'
+      input_data_version:
+        description: 'Description of input data version (for new snapshots)'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      snapshot_branch:
+        description: 'Snapshot branch (ss-*) with package manifest and workflows'
+        required: true
+        type: string
+      snapshot_id:
+        description: 'Project Snapshot ID (or "new" to create one)'
+        required: false
+        type: string
+        default: 'new'
+      input_data_version:
+        description: 'Description of input data version (for new snapshots)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout snapshot branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.snapshot_branch }}
+          fetch-depth: 0
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install R packages from manifest
+        run: |
+          Rscript -e '
+            install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+            if (file.exists("manifest.csv")) {
+              manifest <- read.csv("manifest.csv", stringsAsFactors = FALSE)
+              for (i in seq_len(nrow(manifest))) {
+                pak::pkg_install(manifest$url[i])
+              }
+            } else if (file.exists("packages.yaml")) {
+              pkgs <- yaml::read_yaml("packages.yaml")
+              pak::pkg_install(pkgs$packages)
+            } else {
+              stop("No manifest.csv or packages.yaml found on snapshot branch")
+            }
+          '
+
+      - name: Install open.gismo
+        run: |
+          Rscript -e 'pak::pkg_install("${{ github.repository }}@${{ github.sha }}")'
+
+      - name: Create or load Project Snapshot
+        env:
+          SNAPSHOT_ID: ${{ inputs.snapshot_id }}
+          SNAPSHOT_BRANCH: ${{ inputs.snapshot_branch }}
+          INPUT_DATA_VERSION: ${{ inputs.input_data_version }}
+          REPO: ${{ github.repository }}
+        run: |
+          Rscript -e '
+            snapshot_id <- Sys.getenv("SNAPSHOT_ID")
+            if (snapshot_id == "new" || snapshot_id == "") {
+              snapshot_id <- open.gismo::create_project_snapshot(
+                repo = Sys.getenv("REPO"),
+                branch = Sys.getenv("SNAPSHOT_BRANCH"),
+                input_data_version = Sys.getenv("INPUT_DATA_VERSION"),
+                package_snapshot = Sys.getenv("SNAPSHOT_BRANCH"),
+                token = Sys.getenv("GITHUB_TOKEN")
+              )
+              message("Created new Project Snapshot: ", snapshot_id)
+            } else {
+              message("Using existing Project Snapshot: ", snapshot_id)
+            }
+            writeLines(snapshot_id, "snapshot_id.txt")
+          '
+
+      - name: Run pipeline
+        env:
+          SNAPSHOT_BRANCH: ${{ inputs.snapshot_branch }}
+          REPO: ${{ github.repository }}
+        run: |
+          Rscript -e '
+            library(open.gismo)
+            library(workr)
+
+            snapshot_id <- readLines("snapshot_id.txt")
+            branch <- Sys.getenv("SNAPSHOT_BRANCH")
+            repo <- Sys.getenv("REPO")
+
+            # Load data-config.yaml if available
+            data_config <- list()
+            if (file.exists("data-config.yaml")) {
+              data_config <- yaml::read_yaml("data-config.yaml")
+            } else if (file.exists("config/data-config.yaml")) {
+              data_config <- yaml::read_yaml("config/data-config.yaml")
+            }
+
+            # Build lConfig
+            lConfig <- gh_lConfig(
+              repo = repo,
+              branch = branch,
+              snapshot_id = snapshot_id,
+              data_config = data_config,
+              token = Sys.getenv("GITHUB_TOKEN")
+            )
+
+            # Run pipeline using RunProject (multi-phase) if workflows/ has subdirs,
+            # otherwise fall back to a flat workflow execution path
+            workflow_path <- if (dir.exists("workflows")) "workflows" else "workflow"
+
+            subdirs <- list.dirs(workflow_path, full.names = FALSE, recursive = FALSE)
+            if (length(subdirs) > 0) {
+              message("Running multi-phase pipeline via RunProject()")
+              lResults <- RunProject(
+                strPath = workflow_path,
+                lData = NULL,
+                lConfig = lConfig
+              )
+            } else {
+              message("Loading flat pipeline with MakeWorkflowList()")
+              lWorkflows <- MakeWorkflowList(strPath = workflow_path)
+              message("Executing flat pipeline with RunWorkflows()")
+              lResults <- RunWorkflows(
+                lWorkflows = lWorkflows,
+                lData = NULL,
+                lConfig = lConfig
+              )
+            }
+
+            # Save results summary as log.json
+            log_data <- list(
+              snapshot_id = snapshot_id,
+              started_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+              workflows = list()
+            )
+            log_json <- jsonlite::toJSON(log_data, auto_unbox = TRUE, pretty = TRUE)
+            log_path <- file.path(snapshot_id, "log.json")
+            dir.create(dirname(log_path), recursive = TRUE, showWarnings = FALSE)
+            writeLines(log_json, log_path)
+
+            message("Pipeline execution complete for snapshot: ", snapshot_id)
+          '

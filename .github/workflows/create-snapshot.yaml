@@ -1,0 +1,126 @@
+name: Create Project Snapshot
+
+"on":
+  workflow_call:
+    inputs:
+      snapshot_branch:
+        description: 'Snapshot branch (ss-*) that stores project data'
+        required: true
+        type: string
+      input_data_version:
+        description: 'Version label for input data'
+        required: true
+        type: string
+      input_data_path:
+        description: 'Path to input data directory (relative to repo root on main branch)'
+        required: false
+        type: string
+        default: 'input'
+  workflow_dispatch:
+    inputs:
+      snapshot_branch:
+        description: 'Snapshot branch (ss-*) that stores project data'
+        required: true
+        type: string
+      input_data_version:
+        description: 'Version label for input data'
+        required: true
+        type: string
+      input_data_path:
+        description: 'Path to input data directory (relative to repo root on main branch)'
+        required: false
+        type: string
+        default: 'input'
+
+permissions:
+  contents: write
+
+jobs:
+  create-snapshot:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout snapshot branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.snapshot_branch }}
+          fetch-depth: 0
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install open.gismo
+        run: |
+          Rscript -e '
+            install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+            pak::pkg_install("${{ github.repository }}@${{ github.sha }}")
+          '
+
+      - name: Create Project Snapshot
+        env:
+          SNAPSHOT_BRANCH: ${{ inputs.snapshot_branch }}
+          INPUT_DATA_VERSION: ${{ inputs.input_data_version }}
+          REPO: ${{ github.repository }}
+        run: |
+          Rscript -e '
+            library(open.gismo)
+
+            snapshot_id <- create_project_snapshot(
+              repo = Sys.getenv("REPO"),
+              branch = Sys.getenv("SNAPSHOT_BRANCH"),
+              input_data_version = Sys.getenv("INPUT_DATA_VERSION"),
+              package_snapshot = Sys.getenv("SNAPSHOT_BRANCH"),
+              token = Sys.getenv("GITHUB_TOKEN")
+            )
+
+            message("Created Project Snapshot: ", snapshot_id)
+            message("snapshots.json updated on branch: ", Sys.getenv("SNAPSHOT_BRANCH"))
+            writeLines(snapshot_id, "snapshot_id.txt")
+          '
+
+      - name: Upload input data to snapshot
+        env:
+          INPUT_DATA_PATH: ${{ inputs.input_data_path }}
+          REPO: ${{ github.repository }}
+          SNAPSHOT_BRANCH: ${{ inputs.snapshot_branch }}
+        run: |
+          Rscript -e '
+            library(open.gismo)
+
+            snapshot_id <- readLines("snapshot_id.txt")
+            input_path <- Sys.getenv("INPUT_DATA_PATH")
+            repo <- Sys.getenv("REPO")
+            branch <- Sys.getenv("SNAPSHOT_BRANCH")
+            token <- Sys.getenv("GITHUB_TOKEN")
+
+            # Check out input data from main branch
+            system2("git", c("checkout", "origin/main", "--", input_path), stdout = TRUE, stderr = TRUE)
+
+            # Upload each CSV file to the snapshot input directory
+            if (dir.exists(input_path)) {
+              files <- list.files(input_path, pattern = "\\.csv$", full.names = TRUE)
+              for (f in files) {
+                dest_path <- paste0(snapshot_id, "/input/", basename(f))
+                content <- readLines(f, warn = FALSE)
+                gh_put_content(
+                  repo = repo,
+                  path = dest_path,
+                  content = paste(content, collapse = "\n"),
+                  message = paste("Upload input data:", basename(f)),
+                  branch = branch,
+                  token = token
+                )
+                message("Uploaded: ", dest_path)
+              }
+            } else {
+              message("No input data directory found at: ", input_path)
+            }
+          '

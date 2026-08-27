@@ -1,0 +1,196 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_Summary
+  Description: Summary Data Mapping
+  Priority: 3
+spec:
+  #Raw_Consents:
+  #  studyid:
+  #    type: character
+  #  subjid:
+  #    type: character
+  #  cons_dt:
+  #    type: Date
+  Mapped_Randomization:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    rgmn_dt:
+      type: Date
+    invid:
+      type: character
+    country:
+      type: character
+  Mapped_VISIT:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    visit:
+      type: character
+    visit_dt:
+      type: Date
+  #Mapped_LB:
+  #  studyid:
+  #    type: character
+  #  subjid:
+  #    type: character
+  #  lb_dt:
+  #    type: Date
+  Mapped_Baseline:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    scan_dt:
+      type: Date
+  Mapped_OverallResponse:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    rs_dt:
+      type: Date
+  Mapped_AntiCancer:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    cmst_dt:
+      type: Date
+    cmtrt:
+      type: character
+  Mapped_AE:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    aest_dt:
+      type: Date
+    aeen_dt:
+      type: Date
+  Mapped_Death:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    death_dt:
+      type: Date
+    pd_date:
+      type: Date
+    death:
+      type: logical
+  #Mapped_SurvivalStatus:
+  #  studyid:
+  #    type: character
+  #  subjid:
+  #    type: character
+  #  ss_dt:
+  #    type: Date
+  Mapped_STUDCOMP:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    compyn:
+      type: character
+    compreas:
+      type: character
+  Mapped_Consents:
+    _all:
+  Mapped_Endpoints_StudyWindow:
+    _all:
+  Mapped_SUBJ:
+    studyid:
+      type: character
+    subjid:
+      type: character
+steps:
+  - output: EndOfTreatmentVisit
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_VISIT
+      strQuery: |
+        SELECT *
+        FROM df
+        WHERE visit = 'End of Treatment'
+
+  - output: BaselineScan
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_Baseline
+      strQuery: |
+        WITH ScansOrdered AS (
+          SELECT *,
+            ROW_NUMBER() OVER (
+              PARTITION BY subjid
+              ORDER BY CAST(scan_dt AS DATE)
+            ) AS rn
+          FROM df
+        )
+        SELECT studyid, subjid, scan_dt
+        FROM ScansOrdered
+        WHERE rn = 1
+
+  - output: LatestResponse
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_OverallResponse
+      strQuery: |
+        WITH ResponsesOrdered AS (
+          SELECT *,
+            ROW_NUMBER() OVER (
+              PARTITION BY subjid
+              ORDER BY CAST(rs_dt AS DATE) DESC
+            ) AS rn
+          FROM df
+        )
+        SELECT studyid, subjid, rs_dt
+        FROM ResponsesOrdered
+        WHERE rn = 1
+
+  - output: dfLast_known
+    name: gsm.endpoints::get_last_known
+    params: # you can specify any "param" as the `data_frame_name: data_frame_name` as long as it is in the data provided for the workflow
+      #Raw_Consents: Raw_Consents
+      Mapped_Randomization: Mapped_Randomization
+      Mapped_VISIT: Mapped_VISIT
+      #Mapped_LB: Mapped_LB
+      Mapped_OverallResponse: Mapped_OverallResponse
+      Mapped_AntiCancer: Mapped_AntiCancer
+      Mapped_AE: Mapped_AE
+      Mapped_Death: Mapped_Death
+      #Mapped_SurvivalStatus: Mapped_SurvivalStatus
+
+  - output: Participant_Status
+    name: gsm.endpoints::pfs_map_summary
+    params:
+      dfMappedRandomization: Mapped_Randomization
+      dfMappedVisit: EndOfTreatmentVisit
+      dfMappedBaseline: BaselineScan
+      dfMappedOverallResponse: LatestResponse
+      dfMappedAntiCancer: Mapped_AntiCancer
+      dfMappedDeath: Mapped_Death
+      dfMappedConsents: Mapped_Consents
+      dfMappedStudyCompletion: Mapped_STUDCOMP
+      dfLastKnown: dfLast_known
+      dtReferenceDate: dtSnapshotDate
+      lStudyWindow: Mapped_Endpoints_StudyWindow
+
+  # Subset on participants in [ Mapped_SUBJ ].
+  - output: select_subj
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT studyid, subjid FROM df"
+  - output: Mapped_Endpoints_Summary
+    name: dplyr::inner_join
+    params:
+      x: select_subj
+      'y': Participant_Status
+      by:
+        - studyid
+        - subjid
+
+

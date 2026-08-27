@@ -1,0 +1,16 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_FlagSpecs
+  Description: Create a list of flag specifications.
+  Priority: 1
+steps:
+  - output: flag_specs_path
+    name: gsm.endpoints::get_package_file_path
+    params:
+      path: "workflow/0_other/flag_specs.yaml"
+  - output: Mapped_Endpoints_FlagSpecs
+    name: yaml::read_yaml
+    params:
+      file: flag_specs_path
+
+

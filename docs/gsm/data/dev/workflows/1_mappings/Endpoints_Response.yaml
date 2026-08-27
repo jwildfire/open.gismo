@@ -1,0 +1,58 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_Response
+  Description: Response Data Mapping
+  Priority: 3
+spec:
+  Mapped_Randomization:
+    studyid:
+      type: character
+    invid:
+      type: character
+    subjid:
+      type: character
+    rgmn_dt:
+      type: Date
+    status:
+      type: character
+    country:
+      type: character
+  Mapped_OverallResponse:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    response_folder:
+      type: character
+    ovrlresp:
+      type: character
+    rs_dt:
+      type: Date
+  Mapped_SUBJ:
+    studyid:
+      type: character
+    subjid:
+      type: character
+steps:
+  - output: Response_Day
+    name: gsm.endpoints::pfs_map_response
+    params:
+      dfOverallResponse: Mapped_OverallResponse
+      dfRandomization: Mapped_Randomization
+
+  # Subset on participants in [ Mapped_SUBJ ].
+  - output: select_subj
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT studyid, subjid FROM df"
+  - output: Mapped_Endpoints_Response
+    name: dplyr::inner_join
+    params:
+      x: select_subj
+      'y': Response_Day
+      by:
+        - studyid
+        - subjid
+
+

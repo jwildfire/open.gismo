@@ -1,0 +1,11 @@
+domains:
+  Raw_AE:
+    path: input/Raw_AE.csv
+  Raw_DM:
+    path: input/Raw_DM.csv
+  Mapped_AE:
+    path: output/1_mappings/AE/Mapped_AE.csv
+  Analysis_Input:
+    path: output/2_metrics/kri0001/Analysis_Input.csv
+  Analysis_Summary:
+    path: output/2_metrics/kri0001/Analysis_Summary.csv

@@ -1,0 +1,31 @@
+meta:
+  Type: Report
+  ID: retention_report
+  Output: html
+  Name: Retention Report
+  Description: A report summarizing and detailing retention status.
+spec:
+  Mapped_Endpoints_Summary:
+    _all:
+  Mapped_Endpoints_StudyWindow:
+    _all:
+steps:
+  - output: lSetup
+    name: gsm.endpoints::retention_report_setup
+    params:
+      dfSummary: Mapped_Endpoints_Summary
+      lStudyWindow: Mapped_Endpoints_StudyWindow
+  - output: lCharts
+    name: gsm.endpoints::retention_report_visualizations
+    params:
+      lSetup: lSetup
+  - output: report_path
+    name: gsm.endpoints::create_report
+    params:
+      lSetup: lSetup
+      lCharts: lCharts
+      report_type: retention
+      lglQuiet: TRUE
+      strOutputDir: strOutputDir
+
+

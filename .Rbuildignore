@@ -1,0 +1,16 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^site$
+^\.github$
+^skills$
+^AGENTS\.md$
+^LICENSE\.md$
+^README\.md$
+^design\.md$
+^requirements\.md$
+^tasks\.md$
+^todo\.md$
+^docs$
+^data$
+^[.]?air[.]toml$
+^\.vscode$

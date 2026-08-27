@@ -11,6 +11,13 @@ dist/
 site/node_modules/
 site/dist/
 
+# Leftover local pipeline/site scratch (a gh-backbone snapshot store), not package data
+data/
+# …but vendored third-party source keeps its upstream layout, and gsm.viz has a
+# data/ directory (its input schemas). Re-include the directory itself — git
+# cannot re-include files whose parent directory is still excluded.
+!site/src/vendor/**/data/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -18,3 +25,4 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.positai/

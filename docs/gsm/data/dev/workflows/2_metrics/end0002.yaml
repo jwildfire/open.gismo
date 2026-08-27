@@ -1,0 +1,103 @@
+meta:
+  Type: Analysis
+  ID: end0002
+  Metric: Progression-Free Survival
+  Abbreviation: PFS
+  GroupLevel: Subject
+  Numerator: Risk Level
+  Denominator: SubjectID
+  Model: Identity
+  Score: Identity
+  AnalysisType: identity
+  Threshold: "1,3"
+  Flag: "0,1,2"
+  Priority: 1
+spec:
+  Mapped_Endpoints_Flags:
+    subjid:
+      type: character
+    Total:
+      type: numeric
+    MetricEncoding:
+      type: numeric
+  Mapped_Endpoints_FlagSpecs:
+    _all:
+steps:
+  # Add [ Metric ] and [ Score ] to [ Mapped_Endpoints_Flags ].
+  - output: Analysis_Analyzed
+    name: gsm.core::Analyze_Identity
+    params:
+      dfTransformed: Mapped_Endpoints_Flags
+      strValueCol: MetricEncoding
+
+  # Parse [ Threshold ] and [ Flag ] from metadata and flag participants per retention status.
+  - output: vThreshold
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Threshold
+  - output: vFlag
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Flag
+  - output: Analysis_Flagged_Identity
+    name: gsm.core::Flag
+    params:
+      dfAnalyzed: Analysis_Analyzed
+      vThreshold: vThreshold
+      vFlag: vFlag
+
+  # Remove [ Score ] column in order to encode [ Metric ] with flag specifications.
+  - output: Analysis_Flagged_Unencoded
+    name: gsm.core::RunQuery
+    params:
+      df: Analysis_Flagged_Identity
+      strQuery: |
+        SELECT
+          'Subject' as GroupLevel,
+          subjid as GroupID,
+          MetricEncoding as Metric,
+          Flag
+        FROM df
+
+  # Capture [ Metric ] and [ Score ] encoding from flag specifications.
+  - output: dfFlagSpecs
+    name: gsm.endpoints::workflow_summary
+    params:
+      flag_specs: Mapped_Endpoints_FlagSpecs
+  - output: dfEncoding
+    name: gsm.core::RunQuery
+    params:
+      df: dfFlagSpecs
+      strQuery: |
+        SELECT DISTINCT
+          MetricEncoding as Metric,
+          MetricSubcategory as MetricDescription,
+          ScoreEncoding as Score,
+          ScoreAbbreviation as ScoreDescription
+        FROM df
+        WHERE MetricID = 'Analysis_end0002'
+
+  # Merge encoding onto flagged data by [ Metric ].
+  - output: Analysis_Flagged_Encoded
+    name: dplyr::left_join
+    params:
+      x: Analysis_Flagged_Unencoded
+      'y': dfEncoding
+    # TODO: explicit [ by ] argument does not work because [ Metric ] resolves to [ "Retention" ],
+    # via [ meta$Metric ]
+    #by:
+    #  - Metric
+
+  - output: Analysis_Summary
+    name: gsm.core::Summarize
+    params:
+      dfFlagged: Analysis_Flagged_Encoded
+
+  - output: lAnalysis
+    name: base::list
+    params:
+      Analysis_Analyzed: Analysis_Analyzed
+      Analysis_Flagged: Analysis_Flagged_Encoded
+      Analysis_Summary: Analysis_Summary
+
+

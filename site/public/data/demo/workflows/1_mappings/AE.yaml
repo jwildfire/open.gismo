@@ -1,0 +1,19 @@
+meta:
+  Type: Mapped
+  ID: AE
+  Description: "Map raw adverse event data"
+  Priority: 1
+spec:
+  Raw_AE:
+    SubjectID:
+      type: character
+    AEStartDate:
+      type: Date
+    AETerm:
+      type: character
+steps:
+  - output: Mapped_AE
+    name: "="
+    params:
+      lhs: Mapped_AE
+      rhs: Raw_AE

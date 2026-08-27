@@ -1,0 +1,16 @@
+meta:
+  Type: Mapped
+  ID: Endpoints_StudyWindow
+  Description: Create a list of study window specifications.
+  Priority: 1
+steps:
+  - output: study_window_path
+    name: gsm.endpoints::get_package_file_path
+    params:
+      path: "workflow/0_other/study_window.yaml"
+  - output:  Mapped_Endpoints_StudyWindow
+    name: gsm.endpoints::get_study_window
+    params:
+      yaml_path: study_window_path
+
+

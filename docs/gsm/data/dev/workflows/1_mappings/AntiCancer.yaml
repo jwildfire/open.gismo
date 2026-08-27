@@ -1,0 +1,25 @@
+meta:
+  Type: Mapped
+  ID: AntiCancer
+  Description: Anti-Cancer Data Mapping
+  Priority: 1
+spec:
+  Raw_AntiCancer:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    cmtrt:
+      type: character
+    cmst_dt:
+      type: Date
+steps:
+  - name: gsm.core::RunQuery
+    output: Mapped_AntiCancer
+    params:
+      df: Raw_AntiCancer
+      strQuery: "SELECT studyid, subjid, ANY_VALUE(cmtrt) as cmtrt, MIN(cmst_dt) AS cmst_dt FROM df
+                WHERE cmtrt != ''
+                GROUP BY studyid, subjid"
+
+

@@ -1,0 +1,143 @@
+{
+  "snapshot_id": "ps-001",
+  "workflows": {
+    "Mapped_AE": {
+      "stdout": "Workflow AE completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z"
+    },
+    "Mapped_ENROLL": {
+      "stdout": "Workflow ENROLL completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z"
+    },
+    "Mapped_IE": {
+      "stdout": "Workflow IE completed. 3 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:49Z"
+    },
+    "Mapped_LB": {
+      "stdout": "Workflow LB completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:49Z",
+      "completed_at": "2026-03-25T14:18:49Z"
+    },
+    "Mapped_PD": {
+      "stdout": "Workflow PD completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z"
+    },
+    "Mapped_SDRGCOMP": {
+      "stdout": "Workflow SDRGCOMP completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z"
+    },
+    "Mapped_STUDCOMP": {
+      "stdout": "Workflow STUDCOMP completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z"
+    },
+    "Mapped_SUBJ": {
+      "stdout": "Workflow SUBJ completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z"
+    },
+    "Mapped_COUNTRY": {
+      "stdout": "Workflow COUNTRY completed. 2 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z"
+    },
+    "Analysis_cou0001": {
+      "stdout": "Workflow cou0001 completed. 5 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z"
+    },
+    "Analysis_cou0002": {
+      "stdout": "Workflow cou0002 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z"
+    },
+    "Analysis_cou0005": {
+      "stdout": "Workflow cou0005 completed. 7 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:55Z"
+    },
+    "Analysis_cou0006": {
+      "stdout": "Workflow cou0006 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z"
+    },
+    "Analysis_cou0007": {
+      "stdout": "Workflow cou0007 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z"
+    },
+    "Analysis_cou0012": {
+      "stdout": "Workflow cou0012 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z"
+    },
+    "Analysis_kri0001": {
+      "stdout": "Workflow kri0001 completed. 5 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z"
+    },
+    "Analysis_kri0002": {
+      "stdout": "Workflow kri0002 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z"
+    },
+    "Analysis_kri0005": {
+      "stdout": "Workflow kri0005 completed. 7 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:59Z"
+    },
+    "Analysis_kri0006": {
+      "stdout": "Workflow kri0006 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z"
+    },
+    "Analysis_kri0007": {
+      "stdout": "Workflow kri0007 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z"
+    },
+    "Analysis_kri0012": {
+      "stdout": "Workflow kri0012 completed. 6 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z"
+    },
+    "Analysis_qtl0002": {
+      "stdout": "Workflow qtl0002 completed. 4 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:02Z"
+    },
+    "Reporting_Groups": {
+      "stdout": "Workflow Groups completed. 1 outputs saved.",
+      "stderr": "",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z"
+    }
+  }
+}

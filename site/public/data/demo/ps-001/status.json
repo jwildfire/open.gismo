@@ -1,0 +1,46 @@
+{
+  "snapshot_id": "ps-001",
+  "pipeline_status": "completed",
+  "started_at": "2026-03-25T09:01:00Z",
+  "completed_at": "2026-03-25T09:03:22Z",
+  "workflows": {
+    "Mapped_AE": {
+      "workflow_id": "AE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T09:01:00Z",
+      "completed_at": "2026-03-25T09:01:45Z",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_AE",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0001": {
+      "workflow_id": "kri0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T09:01:46Z",
+      "completed_at": "2026-03-25T09:03:22Z",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    }
+  }
+}

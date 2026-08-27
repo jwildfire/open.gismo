@@ -1,0 +1,1177 @@
+{
+  "snapshot_id": "ps-001",
+  "pipeline_status": "completed",
+  "started_at": "2026-03-25T14:19:02Z",
+  "completed_at": "2026-03-25T14:19:02Z",
+  "workflows": {
+    "Mapped_AE": {
+      "workflow_id": "AE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": [
+        {
+          "name": "Mapped_AE",
+          "output": "Mapped_AE",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_AntiCancer": {
+      "workflow_id": "AntiCancer",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": []
+    },
+    "Mapped_Baseline": {
+      "workflow_id": "Baseline",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": []
+    },
+    "Mapped_Endpoints_FlagSpecs": {
+      "workflow_id": "Endpoints_FlagSpecs",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": []
+    },
+    "Mapped_Endpoints_StudyWindow": {
+      "workflow_id": "Endpoints_StudyWindow",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": []
+    },
+    "Mapped_ENROLL": {
+      "workflow_id": "ENROLL",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:48Z",
+      "steps": [
+        {
+          "name": "Mapped_ENROLL",
+          "output": "Mapped_ENROLL",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_IE": {
+      "workflow_id": "IE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:48Z",
+      "completed_at": "2026-03-25T14:18:49Z",
+      "steps": [
+        {
+          "name": "iecat_custom",
+          "output": "iecat_custom",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "ie_violation",
+          "output": "ie_violation",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Mapped_IE",
+          "output": "Mapped_IE",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_LB": {
+      "workflow_id": "LB",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:49Z",
+      "completed_at": "2026-03-25T14:18:49Z",
+      "steps": [
+        {
+          "name": "Mapped_LB",
+          "output": "Mapped_LB",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_OverallResponse": {
+      "workflow_id": "OverallResponse",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_PD": {
+      "workflow_id": "PD",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": [
+        {
+          "name": "Mapped_PD",
+          "output": "Mapped_PD",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_Randomization": {
+      "workflow_id": "Randomization",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_SDRGCOMP": {
+      "workflow_id": "SDRGCOMP",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": [
+        {
+          "name": "Mapped_SDRGCOMP",
+          "output": "Mapped_SDRGCOMP",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_STUDCOMP": {
+      "workflow_id": "STUDCOMP",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": [
+        {
+          "name": "Mapped_STUDCOMP",
+          "output": "Mapped_STUDCOMP",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_SUBJ": {
+      "workflow_id": "SUBJ",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": [
+        {
+          "name": "Mapped_SUBJ",
+          "output": "Mapped_SUBJ",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_VISIT": {
+      "workflow_id": "VISIT",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_Consents": {
+      "workflow_id": "Consents",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_DATACHG": {
+      "workflow_id": "DATACHG",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_DATAENT": {
+      "workflow_id": "DATAENT",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_Death": {
+      "workflow_id": "Death",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:52Z",
+      "steps": []
+    },
+    "Mapped_EXCLUSION": {
+      "workflow_id": "EXCLUSION",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:52Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_PK": {
+      "workflow_id": "PK",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_QUERY": {
+      "workflow_id": "QUERY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_COUNTRY": {
+      "workflow_id": "COUNTRY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": [
+        {
+          "name": "Temp_CountryCountsWide",
+          "output": "Temp_CountryCountsWide",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Mapped_COUNTRY",
+          "output": "Mapped_COUNTRY",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Mapped_Endpoints_Response": {
+      "workflow_id": "Endpoints_Response",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_Endpoints_Summary": {
+      "workflow_id": "Endpoints_Summary",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_SITE": {
+      "workflow_id": "SITE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_STUDY": {
+      "workflow_id": "STUDY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_Endpoints_Missing": {
+      "workflow_id": "Endpoints_Missing",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Mapped_Endpoints_Flags": {
+      "workflow_id": "Endpoints_Flags",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Analysis_cou0001": {
+      "workflow_id": "cou0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0002": {
+      "workflow_id": "cou0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_SAE",
+          "output": "Temp_SAE",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0003": {
+      "workflow_id": "cou0003",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Analysis_cou0004": {
+      "workflow_id": "cou0004",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:53Z",
+      "steps": []
+    },
+    "Analysis_cou0005": {
+      "workflow_id": "cou0005",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:53Z",
+      "completed_at": "2026-03-25T14:18:55Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_ABNORMAL",
+          "output": "Temp_ABNORMAL",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_LB",
+          "output": "Temp_LB",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0006": {
+      "workflow_id": "cou0006",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_DROPOUT",
+          "output": "Temp_DROPOUT",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0007": {
+      "workflow_id": "cou0007",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_DISCONTINUED",
+          "output": "Temp_DISCONTINUED",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0008": {
+      "workflow_id": "cou0008",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_cou0009": {
+      "workflow_id": "cou0009",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_cou0010": {
+      "workflow_id": "cou0010",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_cou0011": {
+      "workflow_id": "cou0011",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_cou0012": {
+      "workflow_id": "cou0012",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_SCREENED",
+          "output": "Temp_SCREENED",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_cou0013": {
+      "workflow_id": "cou0013",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_cou0014": {
+      "workflow_id": "cou0014",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_kri0001": {
+      "workflow_id": "kri0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0002": {
+      "workflow_id": "kri0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_SAE",
+          "output": "Temp_SAE",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0003": {
+      "workflow_id": "kri0003",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_kri0004": {
+      "workflow_id": "kri0004",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:57Z",
+      "steps": []
+    },
+    "Analysis_kri0005": {
+      "workflow_id": "kri0005",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:18:57Z",
+      "completed_at": "2026-03-25T14:18:59Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_ABNORMAL",
+          "output": "Temp_ABNORMAL",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_LB",
+          "output": "Temp_LB",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0006": {
+      "workflow_id": "kri0006",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_DROPOUT",
+          "output": "Temp_DROPOUT",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0007": {
+      "workflow_id": "kri0007",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_DISCONTINUED",
+          "output": "Temp_DISCONTINUED",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0008": {
+      "workflow_id": "kri0008",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_kri0009": {
+      "workflow_id": "kri0009",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_kri0010": {
+      "workflow_id": "kri0010",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_kri0011": {
+      "workflow_id": "kri0011",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_kri0012": {
+      "workflow_id": "kri0012",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Analyzed",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Flagged",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Temp_SCREENED",
+          "output": "Temp_SCREENED",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_kri0013": {
+      "workflow_id": "kri0013",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_kri0014": {
+      "workflow_id": "kri0014",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_qtl0001": {
+      "workflow_id": "qtl0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:01Z",
+      "steps": []
+    },
+    "Analysis_qtl0002": {
+      "workflow_id": "qtl0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "started_at": "2026-03-25T14:19:01Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": [
+        {
+          "name": "Analysis_Input",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Transformed",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Analysis_Summary",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": {}
+        },
+        {
+          "name": "Mapped_DROPOUT",
+          "output": "Mapped_DROPOUT",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Analysis_end0001": {
+      "workflow_id": "end0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Analysis_end0002": {
+      "workflow_id": "end0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Analysis_srs0001": {
+      "workflow_id": "srs0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Reporting_endGroups": {
+      "workflow_id": "endGroups",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Reporting_Groups": {
+      "workflow_id": "Groups",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "completed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": [
+        {
+          "name": "Reporting_Groups",
+          "output": "Reporting_Groups",
+          "status": "completed",
+          "error": {}
+        }
+      ]
+    },
+    "Reporting_Metrics": {
+      "workflow_id": "Metrics",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Reporting_Results": {
+      "workflow_id": "Results",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Reporting_Bounds": {
+      "workflow_id": "Bounds",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    },
+    "Reporting_endMetrics": {
+      "workflow_id": "endMetrics",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "failed",
+      "started_at": "2026-03-25T14:19:02Z",
+      "completed_at": "2026-03-25T14:19:02Z",
+      "steps": []
+    }
+  }
+}

@@ -1,0 +1,50 @@
+meta:
+  Type: Reporting
+  ID: endGroups
+  Description: Reporting Groups Data
+  Priority: 1
+spec:
+  Mapped_SUBJ:
+    _all:
+  Mapped_STUDY:
+    _all:
+  Mapped_SITE:
+    _all:
+  Mapped_Endpoints_Summary:
+    subjid:
+      type: character
+    Reason:
+      type: character
+    ref_day:
+      type: numeric
+steps:
+  - output: Temp_Summary
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_Endpoints_Summary
+      strQuery: "SELECT subjid, Reason, ref_day FROM df"
+  - output: Temp_SUBJ_appended
+    name: dplyr::left_join
+    params:
+      x: Mapped_SUBJ
+      'y': Temp_Summary
+      by: subjid
+  - output: Temp_SUBJ_Long
+    name: gsm.mapping::MakeLongMeta
+    params:
+      data: Temp_SUBJ_appended
+      strGroupLevel: Subject
+      strGroupCols: "subjid"
+  - output: Temp_SUBJ
+    name: gsm.core::RunQuery
+    params:
+      df: Temp_SUBJ_Long
+      strQuery: "SELECT subjid AS GroupID, Param, Value, GroupLevel FROM df"
+  - output: Reporting_Groups
+    name: dplyr::bind_rows
+    params:
+      Study: Mapped_STUDY
+      Subj: Temp_SUBJ
+      Site: Mapped_SITE
+
+

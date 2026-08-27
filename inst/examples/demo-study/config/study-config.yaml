@@ -1,0 +1,8 @@
+StudyID: DEMO-001
+StudyName: "Demo Study"
+StudyTitle: "open.gismo Demo Study"
+images:
+  - name: workflow/1_mappings/AE.yaml
+    version: latest
+  - name: workflow/2_metrics/kri0001.yaml
+    version: latest

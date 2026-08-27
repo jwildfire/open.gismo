@@ -1,0 +1,21 @@
+meta:
+  Type: Mapped
+  ID: Baseline
+  Description: Baseline Data Mapping
+  Priority: 1
+spec:
+  Raw_Baseline:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    scan_dt:
+      type: Date
+steps:
+  - name: gsm.core::RunQuery
+    output: Mapped_Baseline
+    params:
+      df: Raw_Baseline
+      strQuery: "SELECT studyid, subjid, scan_dt FROM df
+                WHERE subjid IS NOT NULL"
+
